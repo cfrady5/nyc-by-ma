@@ -20,15 +20,17 @@ export default function Header() {
           aria-label="NYC by MA — back to top"
           className="flex items-center transition hover:opacity-80"
         >
-          {/* Scaled down slightly so it sits comfortably in the slim bar. */}
-          <span className="origin-left scale-[0.78] sm:scale-90">
-            <Logo variant="inline" tone="color" />
-          </span>
+          <Logo
+            variant="inline"
+            tone="color"
+            imgClassName="h-10 w-auto sm:h-11"
+            className="origin-left scale-90"
+          />
         </a>
 
         {/* Instagram link */}
         <a
-          href="https://www.instagram.com/nyc_by_ma/"
+          href="https://www.instagram.com/NYC_BY_MA/"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Follow NYC by MA on Instagram"

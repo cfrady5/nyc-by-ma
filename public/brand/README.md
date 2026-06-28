@@ -1,29 +1,28 @@
 # Brand assets
 
-Drop your exported brand logo here to use it in the **header** and **footer**.
+The "MA ♥ NY" logo used in the **header** and **footer**.
 
-## Use your own "MA ♥ NY" logo
+## Files
 
-1. Export the logo as a **transparent** PNG or SVG (remove the solid
-   background so only the artwork shows).
-   - The site has a **light cream** background, so the logo artwork should be
-     **dark / colored** to stay visible. A white-on-transparent logo would be
-     invisible on cream.
-2. Save it here as:
+- `download.webp` — the original uploaded artwork (white on solid black).
+- `logo.png` — **the one the site uses.** Transparent + colorized to the brand
+  board (pink **MA** · red **heart** · ink **NY**), auto-cropped. Generated
+  from `download.webp`.
+- `logo-white.png` — white artwork on transparent, for **dark** backgrounds.
+- `logo-ink.png` — solid near-black artwork on transparent (monochrome option).
 
-   ```
-   /public/brand/logo.png      (or logo.svg)
-   ```
+Which file the site uses is set in **`/src/components/Logo.js`** via
+`CUSTOM_LOGO` (currently `"/brand/logo.png"`).
 
-3. Open `/src/components/Logo.js` and set:
+## Swapping in a different logo
 
-   ```js
-   const CUSTOM_LOGO = "/brand/logo.png";
-   ```
+1. Export a **transparent** PNG/SVG (dark/colored artwork so it stays visible
+   on the light cream background — a white-on-transparent logo would vanish).
+2. Save it here, e.g. `/public/brand/logo.png`.
+3. Point `CUSTOM_LOGO` in `/src/components/Logo.js` at it.
 
-That's it — the header and footer will use your image automatically. If the
-file is ever missing, the UI falls back to the built-in CSS logo lockup, so
-nothing breaks.
+If the file is ever missing, the UI falls back to the built-in CSS logo lockup,
+so nothing breaks.
 
-> Tip: a square or wide transparent logo around 480px tall exports cleanly and
-> stays crisp on retina screens.
+> Tip: a transparent logo around 480–1200px tall exports cleanly and stays
+> crisp on retina screens.

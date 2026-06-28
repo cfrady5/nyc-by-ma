@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="mt-14 border-t border-line bg-ivory/70 px-5 py-14">
       <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
-        <Logo variant="inline" tone="color" />
+        <Logo variant="inline" tone="color" imgClassName="h-20 w-auto sm:h-24" />
 
         <p className="mt-4 font-script text-2xl text-pink-deep">NYC by MA</p>
 
@@ -14,7 +14,7 @@ export default function Footer() {
         </p>
 
         <a
-          href="https://www.instagram.com/nyc_by_ma/"
+          href="https://www.instagram.com/NYC_BY_MA/"
           target="_blank"
           rel="noopener noreferrer"
           className="btn-primary mt-6"

@@ -3,27 +3,26 @@
 // =============================================================================
 // LOGO — header / footer brand mark
 // =============================================================================
-// By default this renders the on-brand CSS lockup (<BrandLogo>), which is
-// transparent and looks crisp at any size.
+// Renders the brand "MA ♥ NY" logo. By default it uses the processed,
+// TRANSPARENT, colorized image at /public/brand/logo.png (pink MA · red heart ·
+// ink NY) — generated from the uploaded artwork.
 //
-// TO USE YOUR OWN EXPORTED LOGO IMAGE (the "MA ♥ NY" file):
-//   1. Export it as a TRANSPARENT PNG or SVG (background removed).
-//      • On the light cream site, the artwork should be dark/colored so it's
-//        visible. (A white-on-transparent logo would be invisible on cream —
-//        use it only with tone-based dark variants or set a dark backdrop.)
-//   2. Save it to:  /public/brand/logo.png   (or logo.svg)
-//   3. Set CUSTOM_LOGO below to its path, e.g. "/brand/logo.png".
+// TO SWAP IN A DIFFERENT LOGO IMAGE:
+//   1. Save a TRANSPARENT PNG/SVG to /public/brand/ (dark/colored artwork so
+//      it's visible on the light cream background).
+//   2. Update CUSTOM_LOGO below to its path.
+//   • For dark backgrounds, /public/brand/logo-white.png is also available.
 //
-// If the file is missing or fails to load, it gracefully falls back to the
-// CSS lockup so the UI never breaks.
+// If the image is missing or fails to load, it gracefully falls back to the
+// CSS lockup (<BrandLogo>) so the UI never breaks.
 // =============================================================================
 
 import { useState } from "react";
 import BrandLogo from "./BrandLogo";
 
-// ▼▼▼ Set this to your transparent logo path to use the real asset ▼▼▼
-const CUSTOM_LOGO = null; // e.g. "/brand/logo.png"
-// ▲▲▲ ----------------------------------------------------------- ▲▲▲
+// ▼▼▼ Path to the transparent logo asset (set to null to use the CSS lockup) ▼▼▼
+const CUSTOM_LOGO = "/brand/logo.png";
+// ▲▲▲ ------------------------------------------------------------------- ▲▲▲
 
 export default function Logo({
   variant = "inline",
