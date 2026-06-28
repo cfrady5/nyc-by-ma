@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+   BASE — NYC by MA (light, editorial, warm)
+   =========================================================================== */
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Offset anchored scrolls so the sticky header + filter bar don't cover
+     section headings. (~56px header + filter bar.) */
+  scroll-padding-top: 140px;
+}
+
+body {
+  @apply bg-cream text-ink antialiased;
+  /* Soft blush / butter / lavender washes for that romantic editorial feel. */
+  background-image:
+    radial-gradient(55rem 55rem at 108% -8%, rgba(216, 27, 121, 0.10), transparent 60%),
+    radial-gradient(45rem 45rem at -8% 6%, rgba(239, 203, 106, 0.12), transparent 58%),
+    radial-gradient(40rem 40rem at 50% 120%, rgba(155, 123, 212, 0.10), transparent 60%);
+  background-attachment: fixed;
+}
+
+/* Accessible focus rings for keyboard users. */
+:focus-visible {
+  outline: 2px solid theme("colors.pink.DEFAULT");
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+::selection {
+  background: theme("colors.pink.soft");
+  color: theme("colors.ink.DEFAULT");
+}
+
+/* ===========================================================================
+   REUSABLE COMPONENT CLASSES
+   =========================================================================== */
+@layer components {
+  /* Primary pink CTA */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-pink px-6 py-3
+           text-sm font-semibold tracking-wide text-white shadow-glow transition
+           hover:bg-pink-deep active:scale-[0.98];
+  }
+
+  /* Secondary outlined button (ink on cream) */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15
+           bg-white px-6 py-3 text-sm font-semibold tracking-wide text-ink transition
+           hover:border-ink/30 hover:bg-blush-soft active:scale-[0.98];
+  }
+
+  /* Small pill button used inside cards */
+  .btn-chip {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-full px-3.5 py-2
+           text-xs font-semibold transition active:scale-[0.97];
+  }
+
+  /* Filter pill */
+  .pill {
+    @apply whitespace-nowrap rounded-full border px-4 py-2 text-sm font-medium transition
+           active:scale-[0.97];
+  }
+  .pill-on {
+    @apply border-transparent bg-pink text-white shadow-glow;
+  }
+  .pill-off {
+    @apply border-ink/10 bg-white/80 text-ink/75 hover:border-pink/40 hover:bg-blush-soft hover:text-ink;
+  }
+
+  /* Card / panel surface — white card on the cream page */
+  .surface {
+    @apply rounded-3xl border border-ink/[0.07] bg-white shadow-card;
+  }
+
+  /* Section eyebrow (gold, uppercase) */
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.24em] text-gold;
+  }
+
+  /* Thin decorative gold divider */
+  .gold-rule {
+    @apply mx-auto h-px w-24 bg-gold-line;
+  }
+}
+
+/* ===========================================================================
+   LEAFLET MAP OVERRIDES (light theme + branded popups)
+   =========================================================================== */
+.leaflet-container {
+  background: #f3ece5;
+  font-family: inherit;
+  border-radius: 1.25rem;
+}
+
+/* Keep tiles bright & airy; just a touch of warmth to match the palette. */
+.leaflet-tile {
+  filter: saturate(0.92) brightness(1.02);
+}
+
+.leaflet-popup-content-wrapper {
+  background: #fffdfb;
+  color: #211a1c;
+  border-radius: 1rem;
+  border: 1px solid rgba(33, 26, 28, 0.08);
+  box-shadow: 0 22px 60px -28px rgba(216, 27, 121, 0.45);
+}
+.leaflet-popup-tip {
+  background: #fffdfb;
+}
+.leaflet-popup-content {
+  margin: 14px 16px;
+  line-height: 1.45;
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: rgba(33, 26, 28, 0.45);
+  padding: 8px 8px 0 0;
+}
+.leaflet-container a.leaflet-popup-close-button:hover {
+  color: #211a1c;
+}
+
+/* Custom divIcon pin (defined in MapView) — reset default marker styles. */
+.nyc-pin {
+  background: transparent;
+  border: none;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 253, 251, 0.82) !important;
+  color: rgba(33, 26, 28, 0.5) !important;
+  backdrop-filter: blur(4px);
+}
+.leaflet-control-attribution a {
+  color: theme("colors.pink.deep") !important;
+}
+.leaflet-bar a {
+  color: #211a1c !important;
+}
+
+/* Horizontal pill row: hide scrollbar but keep scrollability. */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Line clamp helper for card descriptions. */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
