@@ -10,7 +10,6 @@ import Header from "./Header";
 import Hero from "./Hero";
 import Filters from "./Filters";
 import SearchBar from "./SearchBar";
-import FeaturedSection from "./FeaturedSection";
 import MapSection from "./MapSection";
 import Collections from "./Collections";
 import RecommendationGrid from "./RecommendationGrid";
@@ -38,37 +37,6 @@ export default function HomeClient() {
   const [highlightedId, setHighlightedId] = useState(null);
 
   const { isSaved, toggleSaved, savedCount } = useSavedRecs();
-
-  // ---- Deterministic "handpicked" featured set (variety across categories).
-  const featured = useMemo(() => {
-    const want = [
-      "Dessert",
-      "Coffee",
-      "Culture",
-      "Free Activity",
-      "Shopping",
-      "Food & Drink",
-      "Brunch",
-      "Theater & Music",
-    ];
-    const picked = [];
-    const used = new Set();
-    for (const cat of want) {
-      const r = recommendations.find((x) => x.category === cat && !used.has(x.id));
-      if (r) {
-        picked.push(r);
-        used.add(r.id);
-      }
-    }
-    for (const r of recommendations) {
-      if (picked.length >= 8) break;
-      if (!used.has(r.id)) {
-        picked.push(r);
-        used.add(r.id);
-      }
-    }
-    return picked.slice(0, 8);
-  }, []);
 
   // ---- The single filtering pipeline (search + filter + collection + saved).
   // Both the map pins and the card grid read from this, so they stay in sync.
@@ -160,15 +128,6 @@ export default function HomeClient() {
       >
         <SearchBar value={query} onChange={setQuery} />
       </Filters>
-
-      {/* Handpicked favorites preview (real data) */}
-      <FeaturedSection
-        recs={featured}
-        isSaved={isSaved}
-        onToggleSave={toggleSaved}
-        onViewMap={() => scrollToId("map")}
-        onViewAll={() => scrollToId("recs")}
-      />
 
       <MapSection recs={filtered} onViewDetails={handleViewDetails} />
 

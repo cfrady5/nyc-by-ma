@@ -12,7 +12,6 @@ export default function Header({ onNav, onFavorites }) {
     { label: "Build Your Day", href: "/build", page: true },
     { label: "Guides", id: "collections", href: "/#collections" },
     { label: "Favorites", id: "favorites", href: "/#recs", fav: true },
-    { label: "About MA", id: "site-footer", href: "/#site-footer" },
   ];
 
   const renderLink = (l) => {

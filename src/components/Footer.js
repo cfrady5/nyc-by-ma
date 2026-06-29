@@ -12,7 +12,6 @@ const COLUMNS = [
   {
     heading: "Info",
     links: [
-      { label: "About MA", href: "/#site-footer" },
       { label: "How It Works", href: "/build" },
       { label: "Contact", href: "https://www.instagram.com/NYC_BY_MA/", external: true },
     ],
@@ -25,13 +24,6 @@ const COLUMNS = [
       { label: "Boroughs", href: "/#recs" },
     ],
   },
-  {
-    heading: "Legal",
-    links: [
-      { label: "Privacy Policy", href: "/#site-footer" },
-      { label: "Terms of Use", href: "/#site-footer" },
-    ],
-  },
 ];
 
 // Clean, airy, premium footer with link columns + brand marks.
@@ -39,7 +31,7 @@ export default function Footer() {
   return (
     <footer id="site-footer" className="mt-14 border-t border-line bg-ivory/70 px-5 pb-10 pt-14">
       <div className="mx-auto max-w-6xl">
-        <div className="grid gap-10 lg:grid-cols-[1.4fr_repeat(4,1fr)]">
+        <div className="grid gap-10 lg:grid-cols-[1.6fr_repeat(3,1fr)]">
           {/* Brand */}
           <div>
             <a href="/" aria-label="NYC by MA — home" className="inline-flex">
