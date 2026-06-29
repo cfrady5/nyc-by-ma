@@ -37,7 +37,7 @@ export default function Logo({
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={CUSTOM_LOGO}
-        alt="NYC by MA"
+        alt="NYC by MA logo"
         onError={() => setErrored(true)}
         className={imgClassName || "h-12 w-auto"}
       />

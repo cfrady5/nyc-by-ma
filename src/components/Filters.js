@@ -17,7 +17,7 @@ export default function Filters({
   children, // <SearchBar /> is passed in so it shares the sticky container
 }) {
   return (
-    <div className="sticky top-14 z-30 border-b border-line bg-cream/90 backdrop-blur-md">
+    <div className="sticky top-16 z-30 border-b border-line bg-cream/90 backdrop-blur-md">
       <div className="mx-auto max-w-6xl px-4 py-3">
         {/* Search */}
         <div className="mb-3">{children}</div>

@@ -10,6 +10,7 @@ import Header from "./Header";
 import Hero from "./Hero";
 import Filters from "./Filters";
 import SearchBar from "./SearchBar";
+import FeaturedSection from "./FeaturedSection";
 import MapSection from "./MapSection";
 import Collections from "./Collections";
 import RecommendationGrid from "./RecommendationGrid";
@@ -21,6 +22,12 @@ import { recInCollection } from "@/data/collections";
 import { matchesQuery } from "@/lib/utils";
 import { useSavedRecs } from "@/hooks/useSavedRecs";
 
+// Scroll helper shared by the nav + CTAs.
+function scrollToId(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export default function HomeClient() {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All"); // pill label
@@ -30,14 +37,46 @@ export default function HomeClient() {
 
   const { isSaved, toggleSaved, savedCount } = useSavedRecs();
 
-  // ---- Derived stats for the hero ------------------------------------------
+  // ---- Derived stats for the hero (all from real data) ---------------------
   const stats = useMemo(
     () => ({
       count: recommendations.length,
       neighborhoods: new Set(recommendations.map((r) => r.neighborhood)).size,
+      categories: new Set(recommendations.map((r) => r.category)).size,
     }),
     []
   );
+
+  // ---- Deterministic "handpicked" featured set (variety across categories).
+  const featured = useMemo(() => {
+    const want = [
+      "Dessert",
+      "Coffee",
+      "Culture",
+      "Free Activity",
+      "Shopping",
+      "Food & Drink",
+      "Brunch",
+      "Theater & Music",
+    ];
+    const picked = [];
+    const used = new Set();
+    for (const cat of want) {
+      const r = recommendations.find((x) => x.category === cat && !used.has(x.id));
+      if (r) {
+        picked.push(r);
+        used.add(r.id);
+      }
+    }
+    for (const r of recommendations) {
+      if (picked.length >= 8) break;
+      if (!used.has(r.id)) {
+        picked.push(r);
+        used.add(r.id);
+      }
+    }
+    return picked.slice(0, 8);
+  }, []);
 
   // ---- The single filtering pipeline (search + filter + collection + saved).
   // Both the map pins and the card grid read from this, so they stay in sync.
@@ -64,14 +103,10 @@ export default function HomeClient() {
   }, []);
 
   const handleSelectCollection = useCallback((name) => {
-    // Toggle off if the same collection is tapped again.
     setActiveCollection((prev) => (prev === name ? null : name));
     setActiveFilter("All");
     setSavedOnly(false);
-    // Scroll to the results so the effect is visible.
-    requestAnimationFrame(() => {
-      document.getElementById("recs")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    requestAnimationFrame(() => scrollToId("recs"));
   }, []);
 
   const handleResetFilters = useCallback(() => {
@@ -81,20 +116,26 @@ export default function HomeClient() {
     setSavedOnly(false);
   }, []);
 
-  // From a map popup's "View Details": scroll to the matching card + highlight.
   const handleViewDetails = useCallback((rec) => {
     setHighlightedId(rec.id);
     requestAnimationFrame(() => {
       const el = document.getElementById(`rec-${rec.id}`);
       if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
     });
-    // Clear the highlight after a moment.
     setTimeout(() => setHighlightedId(null), 2400);
+  }, []);
+
+  // Nav: "Favorites" turns on the saved filter and scrolls to the grid.
+  const handleFavorites = useCallback(() => {
+    setSavedOnly(true);
+    setActiveFilter("All");
+    setActiveCollection(null);
+    requestAnimationFrame(() => scrollToId("recs"));
   }, []);
 
   return (
     <>
-      <Header />
+      <Header onNav={scrollToId} onFavorites={handleFavorites} />
       <Hero stats={stats} />
 
       {/* Sticky filters + search (drives both map and grid) */}
@@ -111,6 +152,15 @@ export default function HomeClient() {
         <SearchBar value={query} onChange={setQuery} />
       </Filters>
 
+      {/* Handpicked favorites preview (real data) */}
+      <FeaturedSection
+        recs={featured}
+        isSaved={isSaved}
+        onToggleSave={toggleSaved}
+        onViewMap={() => scrollToId("map")}
+        onViewAll={() => scrollToId("recs")}
+      />
+
       <MapSection recs={filtered} onViewDetails={handleViewDetails} />
 
       <Collections
@@ -124,19 +174,19 @@ export default function HomeClient() {
         <div className="mb-5 flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="eyebrow">The full list</p>
-            <h2 className="mt-1 text-3xl font-extrabold tracking-tight sm:text-4xl">
+            <h2 className="mt-1 font-serif text-3xl font-extrabold tracking-tight sm:text-4xl">
               {savedOnly ? (
                 <>
-                  Your <span className="font-script text-pink">saved</span> spots
+                  Your <span className="italic text-pink">saved</span> spots
                 </>
               ) : (
                 <>
-                  All <span className="font-script text-pink">recs</span>
+                  All <span className="italic text-pink">recs</span>
                 </>
               )}
             </h2>
           </div>
-          <span className="text-sm text-white/55">
+          <span className="text-sm text-ink-soft">
             {filtered.length} {filtered.length === 1 ? "result" : "results"}
           </span>
         </div>
@@ -144,8 +194,8 @@ export default function HomeClient() {
         {savedOnly && filtered.length === 0 ? (
           <div className="surface mx-auto max-w-md p-10 text-center">
             <div className="text-4xl">♡</div>
-            <h3 className="mt-3 text-lg font-bold">No saved spots yet</h3>
-            <p className="mt-1 text-sm text-white/60">
+            <h3 className="mt-3 font-serif text-xl font-bold">No saved spots yet</h3>
+            <p className="mt-1 text-sm text-ink-soft">
               Tap the heart on any card to save it here for later.
             </p>
             <button type="button" onClick={handleResetFilters} className="btn-secondary mt-5">
