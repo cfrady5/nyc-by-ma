@@ -51,16 +51,20 @@ export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onR
       </div>
 
       <div className="surface overflow-hidden">
-        {/* Filters (selectable borough + category chips) */}
-        {filters ? <FilterControls {...filters} /> : null}
+        <div className="grid grid-cols-1 lg:grid-cols-[300px_minmax(0,1fr)]">
+          {/* Left: search + filters sidebar */}
+          <div className="border-b border-line lg:max-h-[640px] lg:overflow-y-auto lg:border-b-0 lg:border-r">
+            {filters ? <FilterControls {...filters} /> : null}
+          </div>
 
-        {/* Full-width map */}
-        <div className="h-[380px] w-full sm:h-[480px]">
-          <MapView recs={recs} onViewDetails={handleViewDetails} focusId={focusId} />
-        </div>
+          {/* Right: map + results strip */}
+          <div className="flex min-w-0 flex-col">
+            <div className="h-[380px] w-full sm:h-[460px]">
+              <MapView recs={recs} onViewDetails={handleViewDetails} focusId={focusId} />
+            </div>
 
-        {/* Results populate across the bottom of the map */}
-        <div ref={listRef} className="border-t border-line bg-cream/40">
+            {/* Results populate across the bottom of the map */}
+            <div ref={listRef} className="border-t border-line bg-cream/40">
           {recs.length === 0 ? (
             <div className="px-4 py-8 text-center">
               <div className="text-3xl">{savedOnly ? "♡" : "🫥"}</div>
@@ -93,6 +97,8 @@ export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onR
               ))}
             </div>
           )}
+            </div>
+          </div>
         </div>
       </div>
 

@@ -25,72 +25,99 @@ function scrollToId(id) {
   if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+// Sorting. "Most loved" uses real signals (your saves + how curated a spot is).
+// A true "most visited" needs backend analytics, so it isn't offered yet.
+const priceRank = (r) => {
+  const p = (r.price || "").toLowerCase();
+  if (!p) return 3;
+  if (p.includes("$0")) return 0;
+  if (p.includes("budget")) return 1;
+  return 2;
+};
+const lovedScore = (r, isSaved) =>
+  (isSaved(r.id) ? 1000 : 0) + (r.collectionTags?.length || 0) * 10 + (r.tags?.length || 0);
+
+function sortRecs(list, sort, isSaved) {
+  const arr = [...list];
+  if (sort === "az") return arr.sort((a, b) => a.name.localeCompare(b.name));
+  if (sort === "loved") return arr.sort((a, b) => lovedScore(b, isSaved) - lovedScore(a, isSaved));
+  if (sort === "price") return arr.sort((a, b) => priceRank(a) - priceRank(b) || a.name.localeCompare(b.name));
+  return arr; // featured = original curated order
+}
+
 export default function HomeClient() {
   const [query, setQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState("All"); // pill label
+  const [activeFilters, setActiveFilters] = useState([]); // selected category labels (multi)
+  const [boroughs, setBoroughs] = useState([]); // selected boroughs (multi)
   const [activeCollection, setActiveCollection] = useState(null); // collection name
   const [savedOnly, setSavedOnly] = useState(false);
-  const [borough, setBorough] = useState("All Boroughs");
+  const [sort, setSort] = useState("featured");
 
   const { isSaved, toggleSaved, savedCount } = useSavedRecs();
 
-  // ---- The single filtering pipeline (search + filter + collection + saved).
-  // Both the map pins and the card grid read from this, so they stay in sync.
+  // ---- The single filtering pipeline (search + filters + collection + saved).
+  // Within a facet selections are OR'd; facets are AND'd together.
   const filtered = useMemo(() => {
-    const filterDef = activeFilter !== "All" ? getFilter(activeFilter) : null;
-
+    const defs = activeFilters.map((l) => getFilter(l)).filter(Boolean);
     return recommendations.filter((rec) => {
       if (!matchesQuery(rec, query)) return false;
-      if (borough !== "All Boroughs" && !(rec.borough || "").includes(borough)) return false;
-      if (filterDef && !filterDef.test(rec)) return false;
+      if (boroughs.length && !boroughs.some((b) => (rec.borough || "").includes(b))) return false;
+      if (defs.length && !defs.some((d) => d.test(rec))) return false;
       if (activeCollection && !recInCollection(rec, activeCollection)) return false;
       if (savedOnly && !isSaved(rec.id)) return false;
       return true;
     });
-  }, [query, borough, activeFilter, activeCollection, savedOnly, isSaved]);
+  }, [query, boroughs, activeFilters, activeCollection, savedOnly, isSaved]);
+
+  const sorted = useMemo(() => sortRecs(filtered, sort, isSaved), [filtered, sort, isSaved]);
+
+  const hasActiveFilters =
+    Boolean(query) || boroughs.length > 0 || activeFilters.length > 0 || savedOnly || Boolean(activeCollection);
 
   // ---- Handlers ------------------------------------------------------------
-  const handleFilterChange = useCallback((label) => {
-    setSavedOnly(false);
-    setActiveFilter(label);
+  // Toggle a category filter; "All" clears the category facet.
+  const handleToggleFilter = useCallback((label) => {
+    if (label === "All") return setActiveFilters([]);
+    setActiveFilters((prev) =>
+      prev.includes(label) ? prev.filter((x) => x !== label) : [...prev, label]
+    );
+  }, []);
+
+  // Toggle a borough; "All Boroughs" clears the borough facet.
+  const handleToggleBorough = useCallback((b) => {
+    if (b === "All Boroughs") return setBoroughs([]);
+    setBoroughs((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]));
   }, []);
 
   const handleToggleSaved = useCallback(() => {
     setSavedOnly((s) => !s);
   }, []);
 
-  const handleSelectCollection = useCallback((name) => {
-    setActiveCollection((prev) => (prev === name ? null : name));
-    setActiveFilter("All");
-    setSavedOnly(false);
-    requestAnimationFrame(() => scrollToId("map"));
-  }, []);
-
-  // Pastel collection cards can filter by a collection OR a category.
+  // Pastel collection cards filter by a collection OR a category.
   const handlePickCollection = useCallback((c) => {
     setSavedOnly(false);
     if (c.kind === "category") {
       setActiveCollection(null);
-      setActiveFilter(c.value);
+      setActiveFilters([c.value]);
     } else {
-      setActiveFilter("All");
+      setActiveFilters([]);
       setActiveCollection(c.value);
     }
     requestAnimationFrame(() => scrollToId("map"));
   }, []);
 
-  const handleResetFilters = useCallback(() => {
+  const handleClearAll = useCallback(() => {
     setQuery("");
-    setActiveFilter("All");
+    setActiveFilters([]);
+    setBoroughs([]);
     setActiveCollection(null);
     setSavedOnly(false);
-    setBorough("All Boroughs");
   }, []);
 
   // Nav: "Favorites" turns on the saved filter and scrolls to the explorer.
   const handleFavorites = useCallback(() => {
     setSavedOnly(true);
-    setActiveFilter("All");
+    setActiveFilters([]);
     setActiveCollection(null);
     requestAnimationFrame(() => scrollToId("map"));
   }, []);
@@ -102,24 +129,28 @@ export default function HomeClient() {
 
       {/* Interactive explorer — filters live in the sidebar; map shows pins */}
       <MapSection
-        recs={filtered}
+        recs={sorted}
         isSaved={isSaved}
         onToggleSave={toggleSaved}
         savedOnly={savedOnly}
-        onReset={handleResetFilters}
+        onReset={handleClearAll}
         filters={{
           query,
           onQuery: setQuery,
-          borough,
-          onBorough: setBorough,
-          activeFilter,
-          onFilter: handleFilterChange,
+          boroughs,
+          onToggleBorough: handleToggleBorough,
+          activeFilters,
+          onToggleFilter: handleToggleFilter,
           savedOnly,
           onToggleSaved: handleToggleSaved,
           savedCount,
           resultCount: filtered.length,
           activeCollection,
           onClearCollection: () => setActiveCollection(null),
+          onClearAll: handleClearAll,
+          hasActiveFilters,
+          sort,
+          onSort: setSort,
         }}
       />
 
