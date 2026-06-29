@@ -67,12 +67,19 @@ export default function Header({ onNav, onFavorites }) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-1.5">
+          {/* Mobile-only Build Your Day link (desktop has it in the center nav) */}
+          <a
+            href="/build"
+            className="rounded-full border border-pink/40 bg-white px-3 py-1.5 text-xs font-semibold text-pink-deep transition hover:bg-pink hover:text-white md:hidden"
+          >
+            Build Your Day
+          </a>
           <a
             href="https://www.instagram.com/NYC_BY_MA/"
             target="_blank"
             rel="noopener noreferrer"
             aria-label="NYC by MA on Instagram"
-            className="hidden h-9 w-9 items-center justify-center rounded-full border border-line bg-white text-ink/70 transition hover:border-pink/40 hover:text-pink-deep sm:flex"
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-line bg-white text-ink/70 transition hover:border-pink/40 hover:text-pink-deep"
           >
             <IgIcon />
           </a>
@@ -80,7 +87,7 @@ export default function Header({ onNav, onFavorites }) {
             href="https://www.instagram.com/NYC_BY_MA/"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-pink/40 bg-white px-3.5 py-1.5 text-xs font-semibold text-pink-deep transition hover:bg-pink hover:text-white"
+            className="hidden items-center gap-1.5 rounded-full border border-pink/40 bg-white px-3.5 py-1.5 text-xs font-semibold text-pink-deep transition hover:bg-pink hover:text-white sm:inline-flex"
           >
             Follow MA
             <span className="text-heart" aria-hidden="true">♥</span>

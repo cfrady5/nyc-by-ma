@@ -35,7 +35,7 @@ const slab = Zilla_Slab({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://nyc-by-ma.vercel.app"),
+  metadataBase: new URL("https://nyc-by-ma.com"),
   title: "NYC by MA — NYC recs, mapped.",
   description:
     "An editorial guide to NYC's best food, shopping, date nights, walks, museums, coffee, and hidden gems — all mapped in one place.",
