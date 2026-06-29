@@ -1,21 +1,30 @@
 "use client";
 
-import { useState } from "react";
-import { getCategoryMeta } from "@/data/categories";
+import { useEffect, useRef, useState } from "react";
+import { getCategoryMeta, getCategoryImage } from "@/data/categories";
 
-// Renders a recommendation photo over an always-present branded placeholder.
+// Card cover image. We use a CATEGORY-level stock photo (one per category, in
+// /public/categories/) layered over an always-present branded placeholder.
 //
-// The gradient "Photo coming soon" placeholder is the BASE layer and is always
-// drawn. If a real photo exists it fades in on top; if the file is missing or
-// fails to load, the <img> is removed and the placeholder simply remains —
-// so the UI NEVER shows a broken image, even for a split second.
-//
-// Drop real photos into /public/recommendation-photos/ to replace placeholders.
+// The placeholder is the BASE layer and is always drawn; the cover photo fades
+// in on top once it loads. If a category has no cover yet, or the file fails to
+// load, the placeholder simply remains — so the UI never shows a broken image.
 export default function RecImage({ rec, className = "" }) {
+  const meta = getCategoryMeta(rec.category);
+  // Per-place override wins if provided; otherwise the category cover.
+  const coverSrc = rec.imageOverride || getCategoryImage(rec.category);
+
   const [loaded, setLoaded] = useState(false);
   const [errored, setErrored] = useState(false);
-  const meta = getCategoryMeta(rec.category);
-  const showImg = Boolean(rec.image) && !errored;
+  const imgRef = useRef(null);
+  const showImg = Boolean(coverSrc) && !errored;
+
+  // Catch images that finished loading (e.g. cached) before React attached the
+  // onLoad handler — otherwise the fade-in would never trigger.
+  useEffect(() => {
+    const el = imgRef.current;
+    if (el && el.complete && el.naturalWidth > 0) setLoaded(true);
+  }, [coverSrc]);
 
   return (
     <div className={`relative overflow-hidden ${className}`}>
@@ -31,7 +40,7 @@ export default function RecImage({ rec, className = "" }) {
         <div className="pointer-events-none absolute inset-0 opacity-[0.10]" aria-hidden="true">
           <div className="absolute -right-6 -top-6 text-[8rem] leading-none">{meta.emoji}</div>
         </div>
-        <div className="relative z-10 px-5">
+        <div className="relative px-5">
           <div className="mb-2 text-3xl" aria-hidden="true">
             {meta.emoji}
           </div>
@@ -46,16 +55,17 @@ export default function RecImage({ rec, className = "" }) {
         </span>
       </div>
 
-      {/* Real photo (fades in on top once it loads) */}
+      {/* Category cover photo (decorative — the place identity is in the card text) */}
       {showImg ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={rec.image}
-          alt={`${rec.name} in ${rec.neighborhood}`}
+          ref={imgRef}
+          src={coverSrc}
+          alt=""
           loading="lazy"
           onLoad={() => setLoaded(true)}
           onError={() => setErrored(true)}
-          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-300"
+          className="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
           style={{ opacity: loaded ? 1 : 0 }}
         />
       ) : null}
