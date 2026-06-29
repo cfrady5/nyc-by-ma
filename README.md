@@ -1,6 +1,6 @@
 # NYC by MA — NYC recs, mapped. 🗽💗
 
-A feminine, editorial, searchable guide to the best of NYC — built from
+An editorial, searchable guide to the best of NYC — built from
 [`@NYC_BY_MA`](https://www.instagram.com/NYC_BY_MA/)'s Instagram recommendations.
 
 Browse an interactive map, search by name / neighborhood / tag, filter by

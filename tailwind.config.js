@@ -8,7 +8,7 @@ module.exports = {
     extend: {
       colors: {
         // ---- NYC by MA brand palette --------------------------------------
-        // Feminine, editorial, "luxury bakery / boutique guidebook" — soft
+        // Editorial, "luxury bakery / boutique guidebook" — soft
         // cream + blush, hot pink, butter yellow, lavender, gold, charcoal,
         // with a red heart accent. Tweak here to restyle the whole site.
         cream: "#FCF4EC", // warm page background

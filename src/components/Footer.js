@@ -38,7 +38,7 @@ export default function Footer() {
               <Logo variant="inline" tone="color" imgClassName="h-14 w-auto" />
             </a>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-soft">
-              A feminine, editorial NYC guide by{" "}
+              An editorial NYC guide by{" "}
               <span className="font-semibold text-ink">Mary Ashley Stevenson</span> — the
               best food, coffee, shopping, and hidden gems, beautifully mapped.
             </p>

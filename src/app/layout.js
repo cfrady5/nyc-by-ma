@@ -38,7 +38,7 @@ export const metadata = {
   metadataBase: new URL("https://nyc-by-ma.vercel.app"),
   title: "NYC by MA — NYC recs, mapped.",
   description:
-    "A feminine, editorial guide to NYC's best food, shopping, date nights, walks, museums, coffee, and hidden gems — all mapped in one place.",
+    "An editorial guide to NYC's best food, shopping, date nights, walks, museums, coffee, and hidden gems — all mapped in one place.",
   keywords: [
     "NYC recommendations",
     "New York City guide",
