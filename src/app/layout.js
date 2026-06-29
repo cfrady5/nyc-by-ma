@@ -48,7 +48,7 @@ export const metadata = {
     "NYC by MA",
   ],
   openGraph: {
-    title: "A Guide to New York City by MA",
+    title: "A Guide to NYC by Mary Ashley Stevenson",
     description:
       "Food, shopping, date nights, walks, museums, coffee, and hidden gems — all in one place.",
     siteName: "NYC by MA",
@@ -56,7 +56,7 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "A Guide to New York City by MA",
+    title: "A Guide to NYC by Mary Ashley Stevenson",
     description:
       "Food, shopping, date nights, walks, museums, coffee, and hidden gems — all in one place.",
   },
