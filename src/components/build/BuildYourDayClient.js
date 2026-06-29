@@ -139,9 +139,9 @@ export default function BuildYourDayClient() {
         </p>
       </section>
 
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 pb-16 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
         {/* ---------------- LEFT: pick stops ---------------- */}
-        <section aria-label="Choose stops" className="space-y-4">
+        <section aria-label="Choose stops" className="min-w-0 space-y-4">
           {/* Step 1 — vibe */}
           <div className="surface p-4">
             <StepLabel n={1} title="Choose a vibe" />
@@ -247,7 +247,7 @@ export default function BuildYourDayClient() {
         </section>
 
         {/* ---------------- RIGHT: itinerary ---------------- */}
-        <section aria-label="Your itinerary" className="space-y-4">
+        <section aria-label="Your itinerary" className="min-w-0 space-y-4">
           <DaySummary summary={summary} count={orderedStops.length} />
 
           {/* Map preview of selected stops */}
