@@ -50,51 +50,49 @@ export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onR
         </p>
       </div>
 
-      <div className="surface overflow-hidden p-1.5">
-        <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-[340px_minmax(0,1fr)]">
-          {/* Filters + results sidebar */}
-          <div className="order-1 flex flex-col lg:h-[600px]">
-            {filters ? <FilterControls {...filters} /> : null}
-            <div
-              ref={listRef}
-              className="no-scrollbar max-h-[60vh] flex-1 space-y-2 overflow-y-auto px-2 py-2 lg:max-h-none"
-            >
-              {recs.length === 0 ? (
-                <div className="px-3 py-10 text-center">
-                  <div className="text-3xl">{savedOnly ? "♡" : "🫥"}</div>
-                  <p className="mt-2 text-sm font-semibold text-ink">
-                    {savedOnly ? "No saved spots yet" : "No spots match"}
-                  </p>
-                  <p className="mt-1 text-xs text-ink-soft">
-                    {savedOnly
-                      ? "Tap the heart on any spot to save it."
-                      : "Try a different search or filter."}
-                  </p>
-                  {!savedOnly && onReset && (
-                    <button type="button" onClick={onReset} className="btn-secondary mt-4 px-4 py-2 text-xs">
-                      Reset filters
-                    </button>
-                  )}
-                </div>
-              ) : (
-                recs.map((rec) => (
+      <div className="surface overflow-hidden">
+        {/* Filters (selectable borough + category chips) */}
+        {filters ? <FilterControls {...filters} /> : null}
+
+        {/* Full-width map */}
+        <div className="h-[380px] w-full sm:h-[480px]">
+          <MapView recs={recs} onViewDetails={handleViewDetails} focusId={focusId} />
+        </div>
+
+        {/* Results populate across the bottom of the map */}
+        <div ref={listRef} className="border-t border-line bg-cream/40">
+          {recs.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <div className="text-3xl">{savedOnly ? "♡" : "🫥"}</div>
+              <p className="mt-2 text-sm font-semibold text-ink">
+                {savedOnly ? "No saved spots yet" : "No spots match"}
+              </p>
+              <p className="mt-1 text-xs text-ink-soft">
+                {savedOnly
+                  ? "Tap the heart on any spot to save it."
+                  : "Try a different search or filter."}
+              </p>
+              {!savedOnly && onReset && (
+                <button type="button" onClick={onReset} className="btn-secondary mt-4 px-4 py-2 text-xs">
+                  Reset filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="no-scrollbar flex gap-3 overflow-x-auto p-3">
+              {recs.map((rec) => (
+                <div key={rec.id} className="w-64 shrink-0">
                   <ResultCard
-                    key={rec.id}
                     rec={rec}
                     isSaved={isSaved(rec.id)}
                     onToggleSave={onToggleSave}
                     onFocus={() => setFocusId(rec.id)}
                     highlighted={highlightedId === rec.id}
                   />
-                ))
-              )}
+                </div>
+              ))}
             </div>
-          </div>
-
-          {/* Map */}
-          <div className="order-2 h-[420px] overflow-hidden rounded-[1.1rem] lg:h-[600px]">
-            <MapView recs={recs} onViewDetails={handleViewDetails} focusId={focusId} />
-          </div>
+          )}
         </div>
       </div>
 

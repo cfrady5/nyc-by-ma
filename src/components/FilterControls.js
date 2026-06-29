@@ -6,14 +6,8 @@ import { cx } from "@/lib/utils";
 
 export const BOROUGHS = ["All Boroughs", "Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
 
-const GROUPS = [
-  { key: "category", label: "Categories" },
-  { key: "vibe", label: "Vibes" },
-  { key: "neighborhood", label: "Neighborhoods" },
-];
-
-// The search + filter controls (search, Borough, Category, Saved). Designed to
-// live at the top of the map sidebar (vertical stack), not a sticky bar.
+// Search + selectable borough chips + selectable category chips + Saved.
+// Sits at the top of the map explorer card.
 export default function FilterControls({
   query,
   onQuery,
@@ -29,33 +23,38 @@ export default function FilterControls({
   onClearCollection,
 }) {
   return (
-    <div className="space-y-2 border-b border-line p-3">
-      <SearchBar value={query} onChange={onQuery} placeholder="Search tacos, UWS, coffee…" />
+    <div className="space-y-3 border-b border-line p-3 sm:p-4">
+      <SearchBar value={query} onChange={onQuery} />
 
-      <div className="flex flex-wrap gap-2">
-        <SelectPill
-          label="Borough"
-          value={borough}
-          onChange={onBorough}
-          active={borough !== "All Boroughs"}
-          options={BOROUGHS.map((b) => ({ value: b, label: b }))}
-        />
-        <CategorySelect
-          value={savedOnly ? "All" : activeFilter}
-          onChange={onFilter}
-          active={!savedOnly && activeFilter !== "All"}
-        />
-        <button
-          type="button"
-          onClick={onToggleSaved}
-          aria-pressed={savedOnly}
-          className={cx("pill shrink-0", savedOnly ? "pill-on" : "pill-off")}
-        >
+      {/* Borough chips */}
+      <ChipRow label="Borough">
+        {BOROUGHS.map((b) => (
+          <Chip key={b} active={borough === b} onClick={() => onBorough(b)}>
+            {b === "All Boroughs" ? "All" : b}
+          </Chip>
+        ))}
+      </ChipRow>
+
+      {/* Category chips */}
+      <ChipRow label="Category">
+        <Chip active={!savedOnly && activeFilter === "All"} onClick={() => onFilter("All")}>
+          All
+        </Chip>
+        <Chip active={savedOnly} onClick={onToggleSaved}>
           ♥ Saved{savedCount ? ` (${savedCount})` : ""}
-        </button>
-      </div>
+        </Chip>
+        {FILTERS.map((f) => (
+          <Chip
+            key={f.label}
+            active={!savedOnly && activeFilter === f.label}
+            onClick={() => onFilter(f.label)}
+          >
+            {f.label}
+          </Chip>
+        ))}
+      </ChipRow>
 
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5 text-xs text-ink-soft">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-soft">
         <span aria-live="polite">
           <span className="font-semibold text-ink">{resultCount}</span>{" "}
           {resultCount === 1 ? "spot" : "spots"}
@@ -74,53 +73,26 @@ export default function FilterControls({
   );
 }
 
-function SelectPill({ label, value, onChange, options, active }) {
+function ChipRow({ label, children }) {
   return (
-    <label className="relative shrink-0">
-      <span className="sr-only">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cx(
-          "appearance-none rounded-full border py-2 pl-4 pr-9 text-sm font-medium transition focus:outline-none",
-          active ? "border-transparent bg-pink text-white shadow-glow" : "border-ink/12 bg-white text-ink hover:border-pink/40"
-        )}
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value} className="bg-white text-ink">
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <span className={cx("pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs", active ? "text-white" : "text-ink-soft")} aria-hidden="true">▾</span>
-    </label>
+    <div className="flex items-center gap-2">
+      <span className="hidden shrink-0 text-[11px] font-semibold uppercase tracking-wider text-gold sm:inline">
+        {label}
+      </span>
+      <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1">{children}</div>
+    </div>
   );
 }
 
-function CategorySelect({ value, onChange, active }) {
+function Chip({ active, onClick, children }) {
   return (
-    <label className="relative shrink-0">
-      <span className="sr-only">Category</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={cx(
-          "appearance-none rounded-full border py-2 pl-4 pr-9 text-sm font-medium transition focus:outline-none",
-          active ? "border-transparent bg-pink text-white shadow-glow" : "border-ink/12 bg-white text-ink hover:border-pink/40"
-        )}
-      >
-        <option value="All" className="bg-white text-ink">All categories</option>
-        {GROUPS.map((g) => (
-          <optgroup key={g.key} label={g.label}>
-            {FILTERS.filter((f) => f.group === g.key).map((f) => (
-              <option key={f.label} value={f.label} className="bg-white text-ink">
-                {f.label}
-              </option>
-            ))}
-          </optgroup>
-        ))}
-      </select>
-      <span className={cx("pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs", active ? "text-white" : "text-ink-soft")} aria-hidden="true">▾</span>
-    </label>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={cx("pill shrink-0", active ? "pill-on" : "pill-off")}
+    >
+      {children}
+    </button>
   );
 }
