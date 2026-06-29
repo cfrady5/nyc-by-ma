@@ -12,8 +12,8 @@
 html {
   scroll-behavior: smooth;
   /* Offset anchored scrolls so the sticky nav + filter bar don't cover
-     section headings. (~64px nav + filter bar.) */
-  scroll-padding-top: 150px;
+     section headings. (~64px nav + the taller filter bar with borough row.) */
+  scroll-padding-top: 210px;
 }
 
 body {

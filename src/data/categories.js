@@ -25,11 +25,11 @@ export const CATEGORY_META = {
   Dessert: { emoji: "🍰", color: "#E0709F", label: "Dessert", image: "/categories/dessert.jpg" }, // pink
   Brunch: { emoji: "🥞", color: "#E0A100", label: "Brunch", image: "/categories/brunch.jpg" }, // amber/butter
   Healthy: { emoji: "🥗", color: "#5E9E6F", label: "Healthy", image: "/categories/healthy.jpg" }, // sage
-  Shopping: { emoji: "🛍️", color: "#9B7BD4", label: "Shopping" }, // lavender — add /categories/shopping.jpg
+  Shopping: { emoji: "🛍️", color: "#9B7BD4", label: "Shopping" }, // lavender — add /categories/shopping.jpg (upload came through empty)
   "Free Activity": { emoji: "🎈", color: "#2FA3A3", label: "Free Activity", image: "/categories/free-activity.jpg" }, // teal
   Culture: { emoji: "🎨", color: "#8E4B8B", label: "Culture", image: "/categories/culture.jpg" }, // plum
   "Theater & Music": { emoji: "🎭", color: "#E4002B", label: "Theater & Music", image: "/categories/theater-music.jpg" }, // red
-  "Landmark / Experience": { emoji: "📍", color: "#BC9A56", label: "Landmark" }, // gold — add /categories/landmark.jpg
+  "Landmark / Experience": { emoji: "📍", color: "#BC9A56", label: "Landmark", image: "/categories/landmark.jpg" }, // gold
 };
 
 // Fallback used when a category isn't found in the map above.

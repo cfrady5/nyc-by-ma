@@ -14,6 +14,7 @@ import FeaturedSection from "./FeaturedSection";
 import MapSection from "./MapSection";
 import Collections from "./Collections";
 import RecommendationGrid from "./RecommendationGrid";
+import CTABand from "./CTABand";
 import Footer from "./Footer";
 
 import { recommendations } from "@/data/recommendations";
@@ -33,19 +34,10 @@ export default function HomeClient() {
   const [activeFilter, setActiveFilter] = useState("All"); // pill label
   const [activeCollection, setActiveCollection] = useState(null); // collection name
   const [savedOnly, setSavedOnly] = useState(false);
+  const [borough, setBorough] = useState("All Boroughs");
   const [highlightedId, setHighlightedId] = useState(null);
 
   const { isSaved, toggleSaved, savedCount } = useSavedRecs();
-
-  // ---- Derived stats for the hero (all from real data) ---------------------
-  const stats = useMemo(
-    () => ({
-      count: recommendations.length,
-      neighborhoods: new Set(recommendations.map((r) => r.neighborhood)).size,
-      categories: new Set(recommendations.map((r) => r.category)).size,
-    }),
-    []
-  );
 
   // ---- Deterministic "handpicked" featured set (variety across categories).
   const featured = useMemo(() => {
@@ -85,12 +77,13 @@ export default function HomeClient() {
 
     return recommendations.filter((rec) => {
       if (!matchesQuery(rec, query)) return false;
+      if (borough !== "All Boroughs" && !(rec.borough || "").includes(borough)) return false;
       if (filterDef && !filterDef.test(rec)) return false;
       if (activeCollection && !recInCollection(rec, activeCollection)) return false;
       if (savedOnly && !isSaved(rec.id)) return false;
       return true;
     });
-  }, [query, activeFilter, activeCollection, savedOnly, isSaved]);
+  }, [query, borough, activeFilter, activeCollection, savedOnly, isSaved]);
 
   // ---- Handlers ------------------------------------------------------------
   const handleFilterChange = useCallback((label) => {
@@ -109,11 +102,25 @@ export default function HomeClient() {
     requestAnimationFrame(() => scrollToId("recs"));
   }, []);
 
+  // Pastel collection cards can filter by a collection OR a category.
+  const handlePickCollection = useCallback((c) => {
+    setSavedOnly(false);
+    if (c.kind === "category") {
+      setActiveCollection(null);
+      setActiveFilter(c.value);
+    } else {
+      setActiveFilter("All");
+      setActiveCollection(c.value);
+    }
+    requestAnimationFrame(() => scrollToId("recs"));
+  }, []);
+
   const handleResetFilters = useCallback(() => {
     setQuery("");
     setActiveFilter("All");
     setActiveCollection(null);
     setSavedOnly(false);
+    setBorough("All Boroughs");
   }, []);
 
   const handleViewDetails = useCallback((rec) => {
@@ -136,7 +143,7 @@ export default function HomeClient() {
   return (
     <>
       <Header onNav={scrollToId} onFavorites={handleFavorites} />
-      <Hero stats={stats} />
+      <Hero />
 
       {/* Sticky filters + search (drives both map and grid) */}
       <Filters
@@ -148,6 +155,8 @@ export default function HomeClient() {
         savedCount={savedCount}
         activeCollection={activeCollection}
         onClearCollection={() => setActiveCollection(null)}
+        borough={borough}
+        onBoroughChange={setBorough}
       >
         <SearchBar value={query} onChange={setQuery} />
       </Filters>
@@ -165,8 +174,8 @@ export default function HomeClient() {
 
       <Collections
         recs={recommendations}
-        activeCollection={activeCollection}
-        onSelect={handleSelectCollection}
+        onPick={handlePickCollection}
+        onViewAll={() => scrollToId("recs")}
       />
 
       {/* Recommendation grid */}
@@ -213,6 +222,7 @@ export default function HomeClient() {
         )}
       </section>
 
+      <CTABand />
       <Footer />
     </>
   );

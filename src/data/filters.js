@@ -27,6 +27,7 @@ export const FILTERS = [
   { label: "Free Activities", group: "category", test: (r) => r.category === "Free Activity" },
   { label: "Culture", group: "category", test: (r) => r.category === "Culture" },
   { label: "Theater & Music", group: "category", test: (r) => r.category === "Theater & Music" },
+  { label: "Landmark", group: "category", test: (r) => r.category === "Landmark / Experience" },
 
   // ---- Vibe / occasion -----------------------------------------------------
   {
