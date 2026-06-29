@@ -64,13 +64,28 @@ function FitToPins({ recs }) {
   return null;
 }
 
-export default function MapView({ recs, onViewDetails }) {
+// Pans to a focused rec (sidebar click) and opens its popup.
+function FocusController({ focusId, recs, markerRefs }) {
+  const map = useMap();
+  useEffect(() => {
+    if (!focusId) return;
+    const rec = recs.find((r) => r.id === focusId);
+    if (!rec) return;
+    map.setView([rec.lat, rec.lng], Math.max(map.getZoom(), 15), { animate: true });
+    const m = markerRefs.current[focusId];
+    if (m) m.openPopup();
+  }, [focusId, recs, map, markerRefs]);
+  return null;
+}
+
+export default function MapView({ recs, onViewDetails, focusId }) {
   // Cache one icon per category so we don't rebuild them on every render.
   const iconCache = useMemo(() => ({}), []);
   const iconFor = (category) => {
     if (!iconCache[category]) iconCache[category] = buildIcon(category);
     return iconCache[category];
   };
+  const markerRefs = useRef({});
 
   return (
     <MapContainer
@@ -87,11 +102,19 @@ export default function MapView({ recs, onViewDetails }) {
       />
 
       <FitToPins recs={recs} />
+      <FocusController focusId={focusId} recs={recs} markerRefs={markerRefs} />
 
       {recs.map((rec) => {
         const meta = getCategoryMeta(rec.category);
         return (
-          <Marker key={rec.id} position={[rec.lat, rec.lng]} icon={iconFor(rec.category)}>
+          <Marker
+            key={rec.id}
+            position={[rec.lat, rec.lng]}
+            icon={iconFor(rec.category)}
+            ref={(m) => {
+              if (m) markerRefs.current[rec.id] = m;
+            }}
+          >
             <Popup>
               <div style={{ minWidth: 200, maxWidth: 240 }}>
                 <strong style={{ fontSize: 15, color: "#211a1c" }}>{rec.name}</strong>

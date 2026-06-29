@@ -4,7 +4,7 @@ const COLUMNS = [
   {
     heading: "Explore",
     links: [
-      { label: "All Recs", href: "/#recs" },
+      { label: "All Recs", href: "/#map" },
       { label: "Map", href: "/#map" },
       { label: "Collections", href: "/#collections" },
     ],
@@ -20,8 +20,8 @@ const COLUMNS = [
     heading: "Plan",
     links: [
       { label: "Build Your Day", href: "/build" },
-      { label: "Favorites", href: "/#recs" },
-      { label: "Boroughs", href: "/#recs" },
+      { label: "Favorites", href: "/#map" },
+      { label: "Boroughs", href: "/#map" },
     ],
   },
 ];

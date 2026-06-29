@@ -49,7 +49,7 @@ export default function Hero() {
           </button>
           <button
             type="button"
-            onClick={() => scrollTo("recs")}
+            onClick={() => scrollTo("map")}
             className="btn-secondary w-full text-pink-deep sm:w-auto"
           >
             Browse All Recs

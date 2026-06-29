@@ -7,11 +7,8 @@ import Logo from "./Logo";
 export default function Header({ onNav, onFavorites }) {
   // id present → in-page section; page:true → a real route.
   const LINKS = [
-    { label: "Explore", id: "recs", href: "/#recs" },
     { label: "Map", id: "map", href: "/#map" },
     { label: "Build Your Day", href: "/build", page: true },
-    { label: "Guides", id: "collections", href: "/#collections" },
-    { label: "Favorites", id: "favorites", href: "/#recs", fav: true },
   ];
 
   const renderLink = (l) => {
