@@ -48,10 +48,17 @@ export const metadata = {
     "NYC by MA",
   ],
   openGraph: {
-    title: "NYC by MA — NYC recs, mapped.",
+    title: "A Guide to New York City by MA",
     description:
       "Food, shopping, date nights, walks, museums, coffee, and hidden gems — all in one place.",
+    siteName: "NYC by MA",
     type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "A Guide to New York City by MA",
+    description:
+      "Food, shopping, date nights, walks, museums, coffee, and hidden gems — all in one place.",
   },
 };
 
