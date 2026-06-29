@@ -16,7 +16,7 @@ export default function Hero({ stats }) {
       <HeroArtLeft />
       <HeroArtRight />
 
-      <div className="relative mx-auto max-w-3xl text-center">
+      <div className="relative z-10 mx-auto max-w-3xl text-center">
         {/* Brand logo — the real uploaded image asset */}
         <div className="mb-6 flex justify-center animate-fade-up">
           <Logo
