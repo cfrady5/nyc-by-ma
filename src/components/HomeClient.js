@@ -8,8 +8,6 @@
 import { useCallback, useMemo, useState } from "react";
 import Header from "./Header";
 import Hero from "./Hero";
-import Filters from "./Filters";
-import SearchBar from "./SearchBar";
 import MapSection from "./MapSection";
 import Collections from "./Collections";
 import CTABand from "./CTABand";
@@ -102,29 +100,27 @@ export default function HomeClient() {
       <Header onNav={scrollToId} onFavorites={handleFavorites} />
       <Hero />
 
-      {/* Sticky filters + search (drives both map and grid) */}
-      <Filters
-        activeFilter={activeFilter}
-        onFilterChange={handleFilterChange}
-        resultCount={filtered.length}
-        savedOnly={savedOnly}
-        onToggleSaved={handleToggleSaved}
-        savedCount={savedCount}
-        activeCollection={activeCollection}
-        onClearCollection={() => setActiveCollection(null)}
-        borough={borough}
-        onBoroughChange={setBorough}
-      >
-        <SearchBar value={query} onChange={setQuery} />
-      </Filters>
-
-      {/* Interactive explorer — results sidebar + live map (the primary list) */}
+      {/* Interactive explorer — filters live in the sidebar; map shows pins */}
       <MapSection
         recs={filtered}
         isSaved={isSaved}
         onToggleSave={toggleSaved}
         savedOnly={savedOnly}
         onReset={handleResetFilters}
+        filters={{
+          query,
+          onQuery: setQuery,
+          borough,
+          onBorough: setBorough,
+          activeFilter,
+          onFilter: handleFilterChange,
+          savedOnly,
+          onToggleSaved: handleToggleSaved,
+          savedCount,
+          resultCount: filtered.length,
+          activeCollection,
+          onClearCollection: () => setActiveCollection(null),
+        }}
       />
 
       <Collections

@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
+import FilterControls from "./FilterControls";
 import { getCategoryMeta, CATEGORY_META } from "@/data/categories";
 import { getGoogleMapsUrl, getVisitUrl, cx } from "@/lib/utils";
 
@@ -23,7 +24,7 @@ const MapView = dynamic(() => import("./MapView"), {
 // Both are driven by the same filtered `recs`, so search/filters update the
 // list and the pins together. Clicking a result focuses its pin; "View Details"
 // on a pin highlights and scrolls to the matching result.
-export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onReset }) {
+export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onReset, filters }) {
   const [focusId, setFocusId] = useState(null);
   const [highlightedId, setHighlightedId] = useState(null);
   const listRef = useRef(null);
@@ -51,16 +52,12 @@ export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onR
 
       <div className="surface overflow-hidden p-1.5">
         <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-[340px_minmax(0,1fr)]">
-          {/* Results sidebar */}
-          <div className="order-2 flex flex-col lg:order-1">
-            <div className="flex items-center justify-between px-3 py-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-gold">
-                {recs.length} {recs.length === 1 ? "result" : "results"}
-              </span>
-            </div>
+          {/* Filters + results sidebar */}
+          <div className="order-1 flex flex-col lg:h-[600px]">
+            {filters ? <FilterControls {...filters} /> : null}
             <div
               ref={listRef}
-              className="no-scrollbar space-y-2 overflow-y-auto px-2 pb-2 lg:h-[564px]"
+              className="no-scrollbar max-h-[60vh] flex-1 space-y-2 overflow-y-auto px-2 py-2 lg:max-h-none"
             >
               {recs.length === 0 ? (
                 <div className="px-3 py-10 text-center">
@@ -95,7 +92,7 @@ export default function MapSection({ recs, isSaved, onToggleSave, savedOnly, onR
           </div>
 
           {/* Map */}
-          <div className="order-1 h-[420px] overflow-hidden rounded-[1.1rem] lg:order-2 lg:h-[600px]">
+          <div className="order-2 h-[420px] overflow-hidden rounded-[1.1rem] lg:h-[600px]">
             <MapView recs={recs} onViewDetails={handleViewDetails} focusId={focusId} />
           </div>
         </div>
