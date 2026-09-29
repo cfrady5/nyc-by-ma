@@ -64,6 +64,7 @@ function normalize(item) {
     images,
     textPosition: item.textPosition === "bottom" ? "bottom" : "top",
     photoLayout: item.photoLayout || "auto",
+    coverTemplate: item.coverTemplate || "classic",
     address: item.address || "",
     website: item.website || "",
     lat: Number.isFinite(item.lat) ? item.lat : null,
@@ -138,7 +139,7 @@ export function usePortalStudio() {
 
   // Cover goes to the FRONT; end slide goes to the BACK.
   const addCover = useCallback(() => {
-    const item = normalize({ type: "cover", name: "May Recs", eyebrow: "NYC by MA", caption: "" });
+    const item = normalize({ type: "cover", name: "May Recs", eyebrow: "NYC by MA", caption: "", coverTemplate: "moodboard" });
     setLocations((prev) => [item, ...prev]);
     return item.id;
   }, []);

@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import ScaledSlide from "./ScaledSlide";
-import { slideImages } from "./SlideCard";
+import { slideImages, COVER_TEMPLATES } from "./SlideCard";
 import { fileToScaledDataUrl } from "@/lib/imageResize";
 import { cx } from "@/lib/utils";
 
@@ -94,6 +94,32 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
         {/* Controls */}
         <div className="lg:w-[58%]">
           <div className="mx-auto max-w-md space-y-5 rounded-2xl bg-cream p-4 sm:p-5">
+            {/* Cover template picker */}
+            {type === "cover" ? (
+              <div>
+                <span className="mb-1.5 block text-xs font-semibold text-ink">Cover layout</span>
+                <div className="grid grid-cols-3 gap-2">
+                  {COVER_TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.key}
+                      type="button"
+                      onClick={() => set({ coverTemplate: tpl.key })}
+                      aria-pressed={(loc.coverTemplate || "classic") === tpl.key}
+                      className={cx(
+                        "rounded-xl border px-2 py-2 text-[11px] font-semibold leading-tight transition",
+                        (loc.coverTemplate || "classic") === tpl.key
+                          ? "border-pink bg-blush-soft text-pink-deep shadow-glow"
+                          : "border-ink/10 text-ink hover:border-pink/40"
+                      )}
+                    >
+                      {tpl.label}
+                      <span className="mt-0.5 block text-[10px] font-normal text-ink-soft">{tpl.slots} photos</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
             {/* Text fields (type-aware) */}
             {type === "cover" ? (
               <>
@@ -187,6 +213,9 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
                       <div key={i} className="group relative overflow-hidden rounded-lg ring-1 ring-ink/10">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src={src} alt="" className="h-20 w-full object-cover" />
+                        <span className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-white/90 text-[10px] font-bold text-ink">
+                          {i + 1}
+                        </span>
                         <div className="absolute inset-x-0 bottom-0 flex justify-between bg-black/45 px-1 py-0.5">
                           <button
                             type="button"

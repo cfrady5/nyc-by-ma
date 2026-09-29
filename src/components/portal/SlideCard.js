@@ -166,45 +166,222 @@ export function instagramUrl(handle) {
 }
 
 // ---- COVER SLIDE ------------------------------------------------------------
-function CoverSlide({ theme, loc }) {
-  const t = theme;
-  const images = slideImages(loc);
+// Cover collage templates offered in the editor (key + friendly label + the
+// number of photo slots each one is designed around).
+export const COVER_TEMPLATES = [
+  { key: "classic", label: "Classic", slots: 3 },
+  { key: "moodboard", label: "Moodboard 3×3", slots: 8 },
+  { key: "polaroid", label: "Polaroid scatter", slots: 8 },
+  { key: "filmstrip", label: "Big title + strip", slots: 4 },
+  { key: "sidebar", label: "Title + collage", slots: 4 },
+];
+
+// A single photo cell; empty slots render a soft accent-tinted block so the
+// collage keeps its shape even before every spot is filled.
+function PhotoCell({ src, theme, radius = 8, style }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 40 }}>
-      <div style={{ textAlign: "center" }}>
+    <div style={{ overflow: "hidden", borderRadius: radius, background: hexA(theme.accent, 0.12), ...style }}>
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={src} alt="" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      ) : null}
+    </div>
+  );
+}
+
+// Shared cover title block. `align` and sizes let each template place it.
+function CoverTitle({ theme, loc, align = "center", titleSize = 110, eyebrowSize = 34, subSize = 40, sparkle = true }) {
+  const t = theme;
+  return (
+    <div style={{ textAlign: align }}>
+      <p
+        style={{
+          fontFamily: t.bodyFont,
+          fontSize: eyebrowSize,
+          letterSpacing: "6px",
+          textTransform: "uppercase",
+          margin: 0,
+          opacity: 0.85,
+        }}
+      >
+        {loc.eyebrow || "NYC by MA"}
+      </p>
+      {sparkle ? (
+        <div style={{ display: "flex", justifyContent: align === "left" ? "flex-start" : "center", margin: "14px 0 4px" }}>
+          <Sparkle color={t.accent} size={56} />
+        </div>
+      ) : null}
+      <h1
+        style={{
+          fontFamily: t.titleFont,
+          fontWeight: 800,
+          fontSize: titleSize,
+          lineHeight: 1.0,
+          letterSpacing: "-1px",
+          margin: "6px 0 0",
+        }}
+      >
+        {loc.name || "Your title"}
+      </h1>
+      {loc.caption ? (
         <p
           style={{
             fontFamily: t.bodyFont,
-            fontSize: 34,
-            letterSpacing: "6px",
-            textTransform: "uppercase",
-            margin: 0,
-            opacity: 0.85,
+            fontSize: subSize,
+            lineHeight: 1.3,
+            margin: align === "left" ? "20px 0 0" : "20px auto 0",
+            maxWidth: 780,
           }}
         >
-          {loc.eyebrow || "NYC by MA"}
+          {loc.caption}
         </p>
-        <div style={{ display: "flex", justifyContent: "center", margin: "18px 0 6px" }}>
-          <Sparkle color={t.accent} size={70} />
-        </div>
-        <h1
+      ) : null}
+    </div>
+  );
+}
+
+// Scatter positions for the polaroid template: [left%, top%, rotateDeg].
+const POLAROID_SLOTS = [
+  [2, 3, -8],
+  [37, 1, 5],
+  [70, 5, 9],
+  [1, 35, -5],
+  [72, 37, 7],
+  [6, 66, 7],
+  [40, 70, -5],
+  [70, 66, 9],
+];
+
+function CoverSlide({ theme, loc }) {
+  const t = theme;
+  const images = slideImages(loc);
+  const template = loc.coverTemplate || "classic";
+
+  // ---- Moodboard 3×3 (center cell = title) ----
+  if (template === "moodboard") {
+    let p = 0;
+    return (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12, width: "100%", height: "100%" }}>
+        {Array.from({ length: 9 }).map((_, i) => {
+          if (i === 4) {
+            return (
+              <div
+                key={i}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  padding: 16,
+                  border: `2px solid ${hexA(t.accent, 0.5)}`,
+                  borderRadius: 8,
+                }}
+              >
+                <p style={{ fontFamily: t.bodyFont, fontSize: 20, letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.8 }}>
+                  {loc.eyebrow || "NYC by MA"}
+                </p>
+                <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 46, lineHeight: 1.02, letterSpacing: "-0.5px", margin: "8px 0 0" }}>
+                  {loc.name || "Your title"}
+                </h1>
+                {loc.caption ? (
+                  <p style={{ fontFamily: t.bodyFont, fontSize: 20, lineHeight: 1.25, margin: "8px 0 0" }}>{loc.caption}</p>
+                ) : null}
+              </div>
+            );
+          }
+          const src = images[p++];
+          return <PhotoCell key={i} src={src} theme={t} />;
+        })}
+      </div>
+    );
+  }
+
+  // ---- Polaroid scatter ----
+  if (template === "polaroid") {
+    return (
+      <div style={{ position: "relative", width: "100%", height: "100%" }}>
+        {POLAROID_SLOTS.map(([left, top, rot], i) => (
+          <div
+            key={i}
+            style={{
+              position: "absolute",
+              left: `${left}%`,
+              top: `${top}%`,
+              width: "27%",
+              transform: `rotate(${rot}deg)`,
+              background: "#fff",
+              padding: "10px 10px 34px",
+              borderRadius: 4,
+              boxShadow: `0 18px 34px ${hexA("#000000", 0.28)}`,
+            }}
+          >
+            <PhotoCell src={images[i]} theme={t} radius={2} style={{ height: 220, background: hexA("#000000", 0.06) }} />
+          </div>
+        ))}
+        {/* Title card on top */}
+        <div
           style={{
-            fontFamily: t.titleFont,
-            fontWeight: 800,
-            fontSize: 118,
-            lineHeight: 1.0,
-            letterSpacing: "-1px",
-            margin: "6px 0 0",
+            position: "absolute",
+            left: "50%",
+            top: "50%",
+            transform: "translate(-50%, -50%) rotate(-2deg)",
+            width: "56%",
+            background: "#fff",
+            padding: "26px 24px 30px",
+            borderRadius: 6,
+            boxShadow: `0 26px 50px ${hexA("#000000", 0.34)}`,
+            textAlign: "center",
+            color: "#241F21",
           }}
         >
-          {loc.name || "Your title"}
-        </h1>
-        {loc.caption ? (
-          <p style={{ fontFamily: t.bodyFont, fontSize: 40, lineHeight: 1.3, margin: "22px auto 0", maxWidth: 780 }}>
-            {loc.caption}
+          <p style={{ fontFamily: t.bodyFont, fontSize: 22, letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.7 }}>
+            {loc.eyebrow || "NYC by MA"}
           </p>
-        ) : null}
+          <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 60, lineHeight: 1.0, margin: "8px 0 0" }}>
+            {loc.name || "Your title"}
+          </h1>
+          {loc.caption ? <p style={{ fontFamily: t.bodyFont, fontSize: 24, margin: "10px 0 0" }}>{loc.caption}</p> : null}
+        </div>
       </div>
+    );
+  }
+
+  // ---- Big title + bottom film strip ----
+  if (template === "filmstrip") {
+    const strip = images.slice(0, 5);
+    return (
+      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <CoverTitle theme={t} loc={loc} align="left" titleSize={132} subSize={40} />
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(strip.length, 1)}, 1fr)`, gap: 10, height: "34%" }}>
+          {(strip.length ? strip : [undefined, undefined, undefined]).map((src, i) => (
+            <PhotoCell key={i} src={src} theme={t} radius={10} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Title + collage sidebar ----
+  if (template === "sidebar") {
+    return (
+      <div style={{ display: "flex", height: "100%", gap: 28 }}>
+        <div style={{ flex: "1 1 44%", display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
+          <CoverTitle theme={t} loc={loc} align="left" titleSize={96} subSize={36} />
+        </div>
+        <div style={{ flex: "1 1 56%", minWidth: 0, display: "flex" }}>
+          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} />
+        </div>
+      </div>
+    );
+  }
+
+  // ---- Classic (centered title + optional collage) ----
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 40 }}>
+      <CoverTitle theme={t} loc={loc} align="center" titleSize={118} />
       {images.length ? (
         <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
           <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} />
