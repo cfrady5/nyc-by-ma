@@ -169,23 +169,49 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
                   aria-label="Text size"
                 />
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs font-semibold text-ink">Text color</span>
-                <div className="flex items-center gap-2">
-                  {loc.textColor ? (
-                    <button type="button" onClick={() => set({ textColor: "" })} className="text-[11px] font-semibold text-pink-deep hover:underline">
-                      Use theme
-                    </button>
-                  ) : (
-                    <span className="text-[11px] text-ink-soft">Theme default</span>
-                  )}
-                  <input
-                    type="color"
-                    value={/^#[0-9a-f]{6}$/i.test(loc.textColor || "") ? loc.textColor : theme.text || "#241F21"}
-                    onChange={(e) => set({ textColor: e.target.value })}
-                    aria-label="Text color"
-                    className="h-8 w-10 cursor-pointer rounded-md border border-ink/10 bg-white p-0.5"
-                  />
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs font-semibold text-ink">Text color</span>
+                  <div className="flex items-center gap-2">
+                    {loc.textColor ? (
+                      <button type="button" onClick={() => set({ textColor: "" })} className="text-[11px] font-semibold text-pink-deep hover:underline">
+                        Use theme
+                      </button>
+                    ) : (
+                      <span className="text-[11px] text-ink-soft">Theme default</span>
+                    )}
+                    <input
+                      type="color"
+                      value={/^#[0-9a-f]{6}$/i.test(loc.textColor || "") ? loc.textColor : theme.text || "#241F21"}
+                      onChange={(e) => set({ textColor: e.target.value })}
+                      aria-label="Text color"
+                      className="h-8 w-10 cursor-pointer rounded-md border border-ink/10 bg-white p-0.5"
+                    />
+                  </div>
+                </div>
+                {/* Quick swatches — tap to apply instantly */}
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  {[
+                    { c: theme.text, label: "Theme" },
+                    { c: theme.accent, label: "Accent" },
+                    { c: "#241F21", label: "Ink" },
+                    { c: "#FFFFFF", label: "White" },
+                    { c: "#DF1B7D", label: "Pink" },
+                    { c: "#C99A3D", label: "Gold" },
+                  ].map((s) => (
+                    <button
+                      key={s.label}
+                      type="button"
+                      onClick={() => set({ textColor: s.c })}
+                      aria-label={`Text color ${s.label}`}
+                      title={s.label}
+                      className={cx(
+                        "h-6 w-6 rounded-full border transition hover:scale-110",
+                        (loc.textColor || "").toLowerCase() === s.c.toLowerCase() ? "border-pink ring-2 ring-pink/40" : "border-ink/20"
+                      )}
+                      style={{ background: s.c }}
+                    />
+                  ))}
                 </div>
               </div>
             </div>

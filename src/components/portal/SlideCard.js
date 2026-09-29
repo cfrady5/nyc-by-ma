@@ -349,7 +349,7 @@ function CoverSlide({ theme, loc, ts = 1 }) {
             borderRadius: 6,
             boxShadow: `0 26px 50px ${hexA("#000000", 0.34)}`,
             textAlign: "center",
-            color: "#241F21",
+            color: loc.textColor || "#241F21",
           }}
         >
           <p style={{ fontFamily: t.bodyFont, fontSize: fs(22), letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.7 }}>
