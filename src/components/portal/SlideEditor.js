@@ -269,6 +269,42 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
                     />
                   </div>
                 ) : null}
+
+                {/* Photo size — grow photos to fill the empty space, or shrink them */}
+                {images.length >= 1 ? (
+                  <div className="mt-3">
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-ink">Photo size</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] tabular-nums text-ink-soft">
+                          {Math.round((loc.photoScale || 1) * 100)}%
+                        </span>
+                        {(loc.photoScale || 1) !== 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => set({ photoScale: 1 })}
+                            className="text-[11px] font-semibold text-pink-deep hover:underline"
+                          >
+                            Reset
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.8"
+                      max="1.3"
+                      step="0.02"
+                      value={loc.photoScale || 1}
+                      onChange={(e) => set({ photoScale: Number(e.target.value) })}
+                      className="w-full accent-pink"
+                      aria-label="Photo size"
+                    />
+                    <p className="mt-0.5 text-[11px] text-ink-soft/80">
+                      Drag up to fill the empty space on the grid, or down for more breathing room.
+                    </p>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 

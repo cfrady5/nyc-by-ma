@@ -64,6 +64,7 @@ function normalize(item) {
     images,
     textPosition: item.textPosition === "bottom" ? "bottom" : "top",
     photoLayout: item.photoLayout || "auto",
+    photoScale: Number.isFinite(item.photoScale) ? item.photoScale : 1,
     coverTemplate: item.coverTemplate || "classic",
     address: item.address || "",
     website: item.website || "",

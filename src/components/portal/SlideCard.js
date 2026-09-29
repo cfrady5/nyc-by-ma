@@ -66,8 +66,23 @@ function gridTemplate(count, layout) {
   return { gridTemplateColumns: "1fr 1fr", spanFirst: false }; // 4+
 }
 
-function PhotoArea({ theme, images, layout }) {
+// Convert a photoScale (0.8–1.3, 1 = default) into a "bleed" — how far the photo
+// block extends toward the slide edges to eat up negative space. `protect` names
+// the side next to text so we never overlap it.
+export function photoBleed(scale = 1, protect = "none") {
+  const b = Math.max(-46, Math.min(56, Math.round(((scale || 1) - 1) * 190)));
+  const m = -b;
+  const s = { marginTop: m, marginBottom: m, marginLeft: m, marginRight: m };
+  if (protect === "top") s.marginTop = 0;
+  else if (protect === "bottom") s.marginBottom = 0;
+  else if (protect === "left") s.marginLeft = 0;
+  else if (protect === "right") s.marginRight = 0;
+  return { style: s, gap: Math.max(3, 8 - Math.round(b / 6)) };
+}
+
+function PhotoArea({ theme, images, layout, scale = 1, protect = "none" }) {
   const t = theme;
+  const bleed = photoBleed(scale, protect);
   const frame = {
     width: "100%",
     height: "100%",
@@ -76,6 +91,7 @@ function PhotoArea({ theme, images, layout }) {
     boxShadow: `0 30px 60px ${hexA("#000000", 0.22)}`,
     overflow: "hidden",
     background: hexA("#000000", 0.05),
+    ...bleed.style,
   };
 
   if (images.length === 0) {
@@ -102,7 +118,7 @@ function PhotoArea({ theme, images, layout }) {
 
   return (
     <div style={frame}>
-      <div style={{ display: "grid", gap: 8, width: "100%", height: "100%", ...tmpl }}>
+      <div style={{ display: "grid", gap: bleed.gap, width: "100%", height: "100%", ...tmpl }}>
         {images.map((src, i) => (
           <div
             key={i}
@@ -260,8 +276,9 @@ function CoverSlide({ theme, loc }) {
   // ---- Moodboard 3×3 (center cell = title) ----
   if (template === "moodboard") {
     let p = 0;
+    const mb = photoBleed(loc.photoScale, "none");
     return (
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: 12, width: "100%", height: "100%" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: mb.gap + 4, width: "100%", height: "100%", ...mb.style }}>
         {Array.from({ length: 9 }).map((_, i) => {
           if (i === 4) {
             return (
@@ -299,6 +316,7 @@ function CoverSlide({ theme, loc }) {
 
   // ---- Polaroid scatter ----
   if (template === "polaroid") {
+    const ps = Math.max(0.8, Math.min(1.3, loc.photoScale || 1));
     return (
       <div style={{ position: "relative", width: "100%", height: "100%" }}>
         {POLAROID_SLOTS.map(([left, top, rot], i) => (
@@ -308,7 +326,7 @@ function CoverSlide({ theme, loc }) {
               position: "absolute",
               left: `${left}%`,
               top: `${top}%`,
-              width: "27%",
+              width: `${27 * ps}%`,
               transform: `rotate(${rot}deg)`,
               background: "#fff",
               padding: "10px 10px 34px",
@@ -316,7 +334,7 @@ function CoverSlide({ theme, loc }) {
               boxShadow: `0 18px 34px ${hexA("#000000", 0.28)}`,
             }}
           >
-            <PhotoCell src={images[i]} theme={t} radius={2} style={{ height: 220, background: hexA("#000000", 0.06) }} />
+            <PhotoCell src={images[i]} theme={t} radius={2} style={{ height: 220 * ps, background: hexA("#000000", 0.06) }} />
           </div>
         ))}
         {/* Title card on top */}
@@ -350,12 +368,14 @@ function CoverSlide({ theme, loc }) {
   // ---- Big title + bottom film strip ----
   if (template === "filmstrip") {
     const strip = images.slice(0, 5);
+    const fb = photoBleed(loc.photoScale, "top");
+    const stripH = Math.max(28, Math.min(52, Math.round(34 + ((loc.photoScale || 1) - 1) * 60)));
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
           <CoverTitle theme={t} loc={loc} align="left" titleSize={132} subSize={40} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(strip.length, 1)}, 1fr)`, gap: 10, height: "34%" }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(strip.length, 1)}, 1fr)`, gap: fb.gap + 2, height: `${stripH}%`, ...fb.style }}>
           {(strip.length ? strip : [undefined, undefined, undefined]).map((src, i) => (
             <PhotoCell key={i} src={src} theme={t} radius={10} />
           ))}
@@ -372,7 +392,7 @@ function CoverSlide({ theme, loc }) {
           <CoverTitle theme={t} loc={loc} align="left" titleSize={96} subSize={36} />
         </div>
         <div style={{ flex: "1 1 56%", minWidth: 0, display: "flex" }}>
-          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} />
+          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} protect="left" />
         </div>
       </div>
     );
@@ -384,7 +404,7 @@ function CoverSlide({ theme, loc }) {
       <CoverTitle theme={t} loc={loc} align="center" titleSize={118} />
       {images.length ? (
         <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} />
+          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} protect="top" />
         </div>
       ) : (
         <div style={{ flex: 1 }} />
@@ -443,7 +463,13 @@ function LocationSlide({ theme, loc }) {
   const text = <TextBlock theme={t} loc={loc} />;
   const photos = (
     <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-      <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} />
+      <PhotoArea
+        theme={t}
+        images={images}
+        layout={loc.photoLayout || "auto"}
+        scale={loc.photoScale}
+        protect={textPosition === "top" ? "top" : "bottom"}
+      />
     </div>
   );
   return (
