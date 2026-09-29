@@ -100,6 +100,10 @@ export function usePortalStudio() {
       neighborhood: loc.neighborhood?.trim() || "",
       caption: loc.caption?.trim() || "",
       image: loc.image || "",
+      address: loc.address?.trim() || "",
+      website: loc.website?.trim() || "",
+      lat: Number.isFinite(loc.lat) ? loc.lat : null,
+      lng: Number.isFinite(loc.lng) ? loc.lng : null,
     };
     setLocations((prev) => [...prev, item]);
     return item.id;

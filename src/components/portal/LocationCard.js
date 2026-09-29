@@ -95,6 +95,16 @@ export default function LocationCard({
               {location.caption ? (
                 <p className="mt-1 line-clamp-3 text-xs text-ink-soft/90">{location.caption}</p>
               ) : null}
+              {location.website ? (
+                <a
+                  href={location.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1 inline-block max-w-full truncate text-[11px] font-semibold text-pink-deep hover:underline"
+                >
+                  🔗 {location.website.replace(/^https?:\/\//, "")}
+                </a>
+              ) : null}
 
               <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
                 <IconBtn label="Move up" disabled={index === 0} onClick={() => onMove(location.id, "up")}>

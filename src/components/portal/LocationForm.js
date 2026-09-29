@@ -1,10 +1,22 @@
 "use client";
 
 import { useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { fileToScaledDataUrl } from "@/lib/imageResize";
 
-// Add a new slide location: name, neighborhood, caption, and a photo (which is
-// downscaled client-side before it's stored). Resets after a successful add.
+// The map picker is client-only (Leaflet) — load it on demand.
+const MapPicker = dynamic(() => import("./MapPicker"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full w-full items-center justify-center bg-blush-soft text-xs text-ink-soft">
+      Loading map…
+    </div>
+  ),
+});
+
+// Add a new slide location. You can type an address / business name and let the
+// lookup fill in the exact spot (map pin) and the official website, or fill the
+// fields in by hand. Photos are downscaled client-side before they're stored.
 export default function LocationForm({ onAdd }) {
   const [name, setName] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
@@ -13,6 +25,13 @@ export default function LocationForm({ onAdd }) {
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const fileRef = useRef(null);
+
+  // Address-lookup state
+  const [lookupQuery, setLookupQuery] = useState("");
+  const [looking, setLooking] = useState(false);
+  const [lookupMsg, setLookupMsg] = useState("");
+  const [place, setPlace] = useState(null); // { address, website, lat, lng, source, websiteMatched }
+  const [coords, setCoords] = useState({ lat: null, lng: null });
 
   const handleFile = async (e) => {
     const file = e.target.files?.[0];
@@ -29,12 +48,53 @@ export default function LocationForm({ onAdd }) {
     }
   };
 
+  const runLookup = async (e) => {
+    e?.preventDefault();
+    const q = lookupQuery.trim();
+    if (!q) return;
+    setLooking(true);
+    setLookupMsg("");
+    try {
+      const res = await fetch("/api/place-lookup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!data.found) {
+        setPlace(null);
+        setLookupMsg(data.message || "No match found.");
+        return;
+      }
+      setPlace(data);
+      setCoords({ lat: data.lat, lng: data.lng });
+      // Prefill fields (only overwrite name/neighborhood if empty so manual edits stick).
+      if (!name.trim() && data.name) setName(data.name);
+      if (!neighborhood.trim() && data.neighborhood) setNeighborhood(data.neighborhood);
+      setLookupMsg(
+        data.websiteMatched
+          ? "Matched — website found."
+          : data.source === "osm"
+          ? "Location found (add a website manually — needs Google key for auto-match)."
+          : "Location found (no website listed for this place)."
+      );
+    } catch {
+      setLookupMsg("Lookup failed. Please try again.");
+    } finally {
+      setLooking(false);
+    }
+  };
+
   const reset = () => {
     setName("");
     setNeighborhood("");
     setCaption("");
     setImage("");
     setError("");
+    setLookupQuery("");
+    setLookupMsg("");
+    setPlace(null);
+    setCoords({ lat: null, lng: null });
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -44,7 +104,16 @@ export default function LocationForm({ onAdd }) {
       setError("Give the spot a name.");
       return;
     }
-    onAdd({ name, neighborhood, caption, image });
+    onAdd({
+      name,
+      neighborhood,
+      caption,
+      image,
+      address: place?.address || "",
+      website: place?.website || "",
+      lat: coords.lat,
+      lng: coords.lng,
+    });
     reset();
   };
 
@@ -53,6 +122,55 @@ export default function LocationForm({ onAdd }) {
 
   return (
     <form onSubmit={submit} className="space-y-3">
+      {/* Address / business lookup */}
+      <div className="rounded-xl border border-pink/20 bg-blush-soft/50 p-3">
+        <label className="mb-1 block text-xs font-semibold text-ink">Find by address or name</label>
+        <div className="flex gap-2">
+          <input
+            value={lookupQuery}
+            onChange={(e) => setLookupQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") runLookup(e);
+            }}
+            placeholder="Levain Bakery, 351 Amsterdam Ave"
+            className={field}
+          />
+          <button
+            type="button"
+            onClick={runLookup}
+            disabled={looking || !lookupQuery.trim()}
+            className="shrink-0 rounded-xl bg-pink px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-pink-deep disabled:opacity-50"
+          >
+            {looking ? "…" : "Find"}
+          </button>
+        </div>
+        {lookupMsg ? <p className="mt-2 text-xs font-medium text-pink-deep">{lookupMsg}</p> : null}
+
+        {coords.lat != null ? (
+          <>
+            <div className="mt-3 h-40 overflow-hidden rounded-xl ring-1 ring-ink/10">
+              <MapPicker lat={coords.lat} lng={coords.lng} onChange={setCoords} />
+            </div>
+            <p className="mt-1.5 text-[11px] text-ink-soft">
+              Drag the pin or tap the map to fine-tune the exact spot.
+            </p>
+            {place?.address ? (
+              <p className="mt-1 text-[11px] text-ink-soft">📍 {place.address}</p>
+            ) : null}
+            {place?.website ? (
+              <a
+                href={place.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block max-w-full truncate text-[11px] font-semibold text-pink-deep hover:underline"
+              >
+                🔗 {place.website.replace(/^https?:\/\//, "")}
+              </a>
+            ) : null}
+          </>
+        ) : null}
+      </div>
+
       <div>
         <label className="mb-1 block text-xs font-semibold text-ink">Name *</label>
         <input
