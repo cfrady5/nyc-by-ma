@@ -21,6 +21,17 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
   const images = slideImages(loc);
   const fileRef = useRef(null);
   const [adding, setAdding] = useState(false);
+  const [showPull, setShowPull] = useState(false);
+
+  // Every photo used on OTHER slides, de-duplicated — so this slide (e.g. a
+  // cover collage) can reuse them without re-uploading.
+  const currentSet = new Set(images);
+  const otherImages = [
+    ...new Set(
+      (studio.locations || []).flatMap((l) => (l.id === loc.id ? [] : slideImages(l)))
+    ),
+  ];
+  const pullable = otherImages.filter((src) => !currentSet.has(src));
 
   const set = (patch) => studio.updateLocation(loc.id, patch);
 
@@ -135,6 +146,40 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
                   </button>
                   <input ref={fileRef} type="file" accept="image/*" multiple onChange={onAddPhotos} className="hidden" />
                 </div>
+
+                {/* Pull photos from other slides */}
+                {pullable.length ? (
+                  <div className="mb-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowPull((s) => !s)}
+                      aria-expanded={showPull}
+                      className="flex w-full items-center justify-between rounded-xl border border-ink/12 bg-white px-3 py-2 text-xs font-semibold text-ink transition hover:border-pink/40"
+                    >
+                      <span>Pull from other slides ({pullable.length})</span>
+                      <span className={cx("text-ink-soft transition-transform", showPull && "rotate-180")} aria-hidden="true">▾</span>
+                    </button>
+                    {showPull ? (
+                      <div className="mt-2 grid grid-cols-4 gap-2 rounded-xl bg-blush-soft/50 p-2">
+                        {pullable.map((src, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => studio.addImages(loc.id, [src])}
+                            className="group relative overflow-hidden rounded-lg ring-1 ring-ink/10 transition hover:ring-2 hover:ring-pink"
+                            aria-label="Add this photo to the slide"
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={src} alt="" className="h-16 w-full object-cover" />
+                            <span className="absolute inset-0 flex items-center justify-center bg-pink/0 text-lg font-bold text-white opacity-0 transition group-hover:bg-pink/45 group-hover:opacity-100">
+                              ＋
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 {images.length ? (
                   <div className="grid grid-cols-3 gap-2">
