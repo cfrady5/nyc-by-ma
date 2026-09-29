@@ -21,7 +21,7 @@ export default function LocationForm({ onAdd }) {
   const [name, setName] = useState("");
   const [neighborhood, setNeighborhood] = useState("");
   const [caption, setCaption] = useState("");
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
   const fileRef = useRef(null);
@@ -34,17 +34,25 @@ export default function LocationForm({ onAdd }) {
   const [coords, setCoords] = useState({ lat: null, lng: null });
 
   const handleFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setError("");
     setWorking(true);
     try {
-      const url = await fileToScaledDataUrl(file);
-      setImage(url);
+      const urls = [];
+      for (const f of files) {
+        try {
+          urls.push(await fileToScaledDataUrl(f));
+        } catch {
+          /* skip bad file */
+        }
+      }
+      if (urls.length) setImages((prev) => [...prev, ...urls]);
     } catch (err) {
-      setError(err.message || "Couldn't process that image.");
+      setError(err.message || "Couldn't process those images.");
     } finally {
       setWorking(false);
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
@@ -89,7 +97,7 @@ export default function LocationForm({ onAdd }) {
     setName("");
     setNeighborhood("");
     setCaption("");
-    setImage("");
+    setImages([]);
     setError("");
     setLookupQuery("");
     setLookupMsg("");
@@ -108,7 +116,7 @@ export default function LocationForm({ onAdd }) {
       name,
       neighborhood,
       caption,
-      image,
+      images,
       address: place?.address || "",
       website: place?.website || "",
       lat: coords.lat,
@@ -203,21 +211,35 @@ export default function LocationForm({ onAdd }) {
       </div>
 
       <div>
-        <label className="mb-1 block text-xs font-semibold text-ink">Photo</label>
-        <div className="flex items-center gap-3">
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            onChange={handleFile}
-            className="block w-full text-xs text-ink-soft file:mr-3 file:rounded-full file:border-0 file:bg-blush file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-pink-deep hover:file:bg-pink-soft/60"
-          />
-          {image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={image} alt="preview" className="h-12 w-12 shrink-0 rounded-lg object-cover" />
-          ) : null}
-        </div>
-        {working ? <p className="mt-1 text-xs text-ink-soft">Processing image…</p> : null}
+        <label className="mb-1 block text-xs font-semibold text-ink">Photos (add one or more)</label>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple
+          onChange={handleFile}
+          className="block w-full text-xs text-ink-soft file:mr-3 file:rounded-full file:border-0 file:bg-blush file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-pink-deep hover:file:bg-pink-soft/60"
+        />
+        {images.length ? (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {images.map((src, i) => (
+              <div key={i} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="h-12 w-12 rounded-lg object-cover ring-1 ring-ink/10" />
+                <button
+                  type="button"
+                  aria-label="Remove photo"
+                  onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-heart text-[10px] font-bold text-white"
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : null}
+        {working ? <p className="mt-1 text-xs text-ink-soft">Processing images…</p> : null}
+        <p className="mt-1 text-[11px] text-ink-soft/80">You can add more photos and arrange them after adding.</p>
       </div>
 
       {error ? <p className="text-xs font-medium text-heart">{error}</p> : null}

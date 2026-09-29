@@ -45,6 +45,32 @@ export const DEFAULT_THEME = {
 const uid = () =>
   `loc_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
 
+// Normalize an item to the current shape (adds type, images[], layout fields;
+// migrates a legacy single `image` to images[]).
+function normalize(item) {
+  const images = Array.isArray(item.images)
+    ? item.images.filter(Boolean)
+    : item.image
+    ? [item.image]
+    : [];
+  return {
+    id: item.id || uid(),
+    type: item.type || "location",
+    name: item.name || "",
+    neighborhood: item.neighborhood || "",
+    caption: item.caption || "",
+    eyebrow: item.eyebrow || "",
+    handle: item.handle || "",
+    images,
+    textPosition: item.textPosition === "bottom" ? "bottom" : "top",
+    photoLayout: item.photoLayout || "auto",
+    address: item.address || "",
+    website: item.website || "",
+    lat: Number.isFinite(item.lat) ? item.lat : null,
+    lng: Number.isFinite(item.lng) ? item.lng : null,
+  };
+}
+
 function loadInitial() {
   if (typeof window === "undefined") return { theme: DEFAULT_THEME, locations: [] };
   try {
@@ -53,7 +79,7 @@ function loadInitial() {
     const parsed = JSON.parse(raw);
     return {
       theme: { ...DEFAULT_THEME, ...(parsed.theme || {}) },
-      locations: Array.isArray(parsed.locations) ? parsed.locations : [],
+      locations: Array.isArray(parsed.locations) ? parsed.locations.map(normalize) : [],
     };
   } catch {
     return { theme: DEFAULT_THEME, locations: [] };
@@ -92,19 +118,38 @@ export function usePortalStudio() {
     setTheme((prev) => ({ ...prev, preset: key, bg: p.bg, text: p.text, accent: p.accent }));
   }, []);
 
-  // ---- Locations ---------------------------------------------------------
+  // ---- Slides ------------------------------------------------------------
   const addLocation = useCallback((loc) => {
-    const item = {
-      id: uid(),
+    const images = Array.isArray(loc.images) ? loc.images.filter(Boolean) : loc.image ? [loc.image] : [];
+    const item = normalize({
+      type: "location",
       name: loc.name?.trim() || "Untitled spot",
       neighborhood: loc.neighborhood?.trim() || "",
       caption: loc.caption?.trim() || "",
-      image: loc.image || "",
+      images,
       address: loc.address?.trim() || "",
       website: loc.website?.trim() || "",
-      lat: Number.isFinite(loc.lat) ? loc.lat : null,
-      lng: Number.isFinite(loc.lng) ? loc.lng : null,
-    };
+      lat: loc.lat,
+      lng: loc.lng,
+    });
+    setLocations((prev) => [...prev, item]);
+    return item.id;
+  }, []);
+
+  // Cover goes to the FRONT; end slide goes to the BACK.
+  const addCover = useCallback(() => {
+    const item = normalize({ type: "cover", name: "May Recs", eyebrow: "NYC by MA", caption: "" });
+    setLocations((prev) => [item, ...prev]);
+    return item.id;
+  }, []);
+
+  const addEnd = useCallback(() => {
+    const item = normalize({
+      type: "end",
+      name: "Follow along",
+      handle: "@NYC_BY_MA",
+      caption: "For more NYC recs, follow along.",
+    });
     setLocations((prev) => [...prev, item]);
     return item.id;
   }, []);
@@ -129,6 +174,32 @@ export function usePortalStudio() {
     });
   }, []);
 
+  // ---- Per-slide image helpers ------------------------------------------
+  const addImages = useCallback((id, urls) => {
+    const list = (Array.isArray(urls) ? urls : [urls]).filter(Boolean);
+    if (!list.length) return;
+    setLocations((prev) => prev.map((l) => (l.id === id ? { ...l, images: [...(l.images || []), ...list] } : l)));
+  }, []);
+
+  const removeImage = useCallback((id, idx) => {
+    setLocations((prev) =>
+      prev.map((l) => (l.id === id ? { ...l, images: (l.images || []).filter((_, i) => i !== idx) } : l))
+    );
+  }, []);
+
+  const moveImage = useCallback((id, idx, dir) => {
+    setLocations((prev) =>
+      prev.map((l) => {
+        if (l.id !== id) return l;
+        const imgs = [...(l.images || [])];
+        const j = dir === "left" ? idx - 1 : idx + 1;
+        if (j < 0 || j >= imgs.length) return l;
+        [imgs[idx], imgs[j]] = [imgs[j], imgs[idx]];
+        return { ...l, images: imgs };
+      })
+    );
+  }, []);
+
   return {
     hydrated,
     theme,
@@ -136,8 +207,13 @@ export function usePortalStudio() {
     applyPreset,
     locations,
     addLocation,
+    addCover,
+    addEnd,
     updateLocation,
     removeLocation,
     moveLocation,
+    addImages,
+    removeImage,
+    moveImage,
   };
 }

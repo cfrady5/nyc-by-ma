@@ -7,6 +7,7 @@ import LocationForm from "./LocationForm";
 import ThemePanel from "./ThemePanel";
 import LocationCard from "./LocationCard";
 import Slideshow from "./Slideshow";
+import SlideEditor from "./SlideEditor";
 import { cx } from "@/lib/utils";
 
 const SESSION_KEY = "nyc_by_ma_portal_authed";
@@ -124,8 +125,11 @@ function Studio({ onLock }) {
   const studio = usePortalStudio();
   const [tab, setTab] = useState("add"); // "add" | "theme"
   const [playing, setPlaying] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const { hydrated, theme, updateTheme, applyPreset, locations } = studio;
+  const editing = locations.find((l) => l.id === editingId) || null;
+  const editingIndex = editing ? locations.findIndex((l) => l.id === editingId) : -1;
 
   if (!hydrated) {
     return (
@@ -182,11 +186,27 @@ function Studio({ onLock }) {
 
         {/* Right: the deck */}
         <div>
-          <div className="mb-3 flex items-center justify-between">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-ink-soft">
               <span className="font-semibold text-ink">{locations.length}</span>{" "}
               {locations.length === 1 ? "slide" : "slides"}
             </p>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingId(studio.addCover())}
+                className="rounded-full border border-ink/12 bg-white px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-pink/40 hover:bg-blush-soft"
+              >
+                ＋ Cover slide
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditingId(studio.addEnd())}
+                className="rounded-full border border-ink/12 bg-white px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-pink/40 hover:bg-blush-soft"
+              >
+                ＋ End slide (QR)
+              </button>
+            </div>
           </div>
 
           {locations.length === 0 ? (
@@ -194,7 +214,8 @@ function Studio({ onLock }) {
               <div className="text-4xl">🗽</div>
               <p className="mt-3 font-serif text-lg font-bold text-ink">No slides yet</p>
               <p className="mt-1 max-w-xs text-sm text-ink-soft">
-                Add your first location on the left — it appears here as a themed slide instantly.
+                Add your first location on the left, or start with a cover slide — each one appears
+                here as a themed slide instantly.
               </p>
             </div>
           ) : (
@@ -206,7 +227,7 @@ function Studio({ onLock }) {
                   theme={theme}
                   index={i}
                   total={locations.length}
-                  onUpdate={studio.updateLocation}
+                  onEdit={setEditingId}
                   onRemove={studio.removeLocation}
                   onMove={studio.moveLocation}
                 />
@@ -215,11 +236,22 @@ function Studio({ onLock }) {
           )}
 
           <p className="mt-5 text-xs text-ink-soft/80">
-            Slides are saved on this device. Use “Play slideshow” to preview full-screen and download
-            each slide as an image for Instagram.
+            Slides are saved on this device. Tap any slide to edit it fully. Use “Play slideshow” to
+            preview full-screen and download each slide as an image for Instagram.
           </p>
         </div>
       </div>
+
+      {editing ? (
+        <SlideEditor
+          location={editing}
+          theme={theme}
+          index={editingIndex}
+          total={locations.length}
+          studio={studio}
+          onClose={() => setEditingId(null)}
+        />
+      ) : null}
 
       {playing ? (
         <Slideshow theme={theme} locations={locations} onClose={() => setPlaying(false)} />

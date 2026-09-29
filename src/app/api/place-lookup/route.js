@@ -5,13 +5,13 @@
 // returns the matched name, formatted address, coordinates, neighborhood, and —
 // crucially — the business's OFFICIAL WEBSITE.
 //
-// Uses the Google Places API when GOOGLE_MAPS_API_KEY is set (the same key the
-// transit route already uses; it stays on the server). Falls back to free
-// OpenStreetMap/Nominatim geocoding (coordinates only, no website) so the portal
-// still resolves addresses without a key.
+// Uses the Google Places API when a key is set — NEW_PLACES (a dedicated Places
+// key) is preferred, otherwise GOOGLE_MAPS_API_KEY. The key stays on the server.
+// Falls back to free OpenStreetMap/Nominatim geocoding (coordinates only, no
+// website) so the portal still resolves addresses without a key.
 //
 // To enable website matching on Vercel:
-//   Settings → Environment Variables → GOOGLE_MAPS_API_KEY = <key>
+//   Settings → Environment Variables → NEW_PLACES = <key>
 //   (Places API enabled)
 // =============================================================================
 
@@ -112,7 +112,8 @@ export async function POST(request) {
     return Response.json({ error: "query required" }, { status: 400 });
   }
 
-  const key = process.env.GOOGLE_MAPS_API_KEY;
+  // Prefer the dedicated Places key (NEW_PLACES) if set, else the shared key.
+  const key = process.env.NEW_PLACES || process.env.GOOGLE_MAPS_API_KEY;
 
   try {
     let result = null;
