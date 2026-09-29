@@ -144,6 +144,52 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
               </>
             )}
 
+            {/* Text size + color (every slide) */}
+            <div className="space-y-2 rounded-xl bg-blush-soft/40 p-3">
+              <div>
+                <div className="mb-1 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-ink">Text size</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] tabular-nums text-ink-soft">{Math.round((loc.textScale || 1) * 100)}%</span>
+                    {(loc.textScale || 1) !== 1 ? (
+                      <button type="button" onClick={() => set({ textScale: 1 })} className="text-[11px] font-semibold text-pink-deep hover:underline">
+                        Reset
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+                <input
+                  type="range"
+                  min="0.7"
+                  max="1.4"
+                  step="0.02"
+                  value={loc.textScale || 1}
+                  onChange={(e) => set({ textScale: Number(e.target.value) })}
+                  className="w-full accent-pink"
+                  aria-label="Text size"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-ink">Text color</span>
+                <div className="flex items-center gap-2">
+                  {loc.textColor ? (
+                    <button type="button" onClick={() => set({ textColor: "" })} className="text-[11px] font-semibold text-pink-deep hover:underline">
+                      Use theme
+                    </button>
+                  ) : (
+                    <span className="text-[11px] text-ink-soft">Theme default</span>
+                  )}
+                  <input
+                    type="color"
+                    value={/^#[0-9a-f]{6}$/i.test(loc.textColor || "") ? loc.textColor : theme.text || "#241F21"}
+                    onChange={(e) => set({ textColor: e.target.value })}
+                    aria-label="Text color"
+                    className="h-8 w-10 cursor-pointer rounded-md border border-ink/10 bg-white p-0.5"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* Text position (location + cover) */}
             {type !== "end" ? (
               <Segmented

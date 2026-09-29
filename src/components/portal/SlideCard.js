@@ -66,23 +66,18 @@ function gridTemplate(count, layout) {
   return { gridTemplateColumns: "1fr 1fr", spanFirst: false }; // 4+
 }
 
-// Convert a photoScale (0.8–1.3, 1 = default) into a "bleed" — how far the photo
-// block extends toward the slide edges to eat up negative space. `protect` names
-// the side next to text so we never overlap it.
-export function photoBleed(scale = 1, protect = "none") {
-  const b = Math.max(-46, Math.min(56, Math.round(((scale || 1) - 1) * 190)));
-  const m = -b;
-  const s = { marginTop: m, marginBottom: m, marginLeft: m, marginRight: m };
-  if (protect === "top") s.marginTop = 0;
-  else if (protect === "bottom") s.marginBottom = 0;
-  else if (protect === "left") s.marginLeft = 0;
-  else if (protect === "right") s.marginRight = 0;
-  return { style: s, gap: Math.max(3, 8 - Math.round(b / 6)) };
+// Convert a photoScale (0.8–1.3, 1 = default) into a symmetric "bleed" — the
+// photo block expands equally on all four sides, so it grows from its CENTER
+// (not anchored to a corner) to eat up negative space. Capped so growth stays
+// within the gap and never overlaps the title.
+export function photoBleed(scale = 1) {
+  const b = Math.max(-34, Math.min(34, Math.round(((scale || 1) - 1) * 130)));
+  return { style: { margin: -b }, gap: Math.max(3, 8 - Math.round(b / 6)) };
 }
 
-function PhotoArea({ theme, images, layout, scale = 1, protect = "none" }) {
+function PhotoArea({ theme, images, layout, scale = 1 }) {
   const t = theme;
-  const bleed = photoBleed(scale, protect);
+  const bleed = photoBleed(scale);
   const frame = {
     width: "100%",
     height: "100%",
@@ -137,8 +132,9 @@ function PhotoArea({ theme, images, layout, scale = 1, protect = "none" }) {
   );
 }
 
-function TextBlock({ theme, loc }) {
+function TextBlock({ theme, loc, ts = 1 }) {
   const t = theme;
+  const fs = (n) => Math.round(n * ts);
   return (
     <div style={{ display: "flex", gap: 28, alignItems: "flex-start" }}>
       <div style={{ flex: "1 1 55%", minWidth: 0 }}>
@@ -146,7 +142,7 @@ function TextBlock({ theme, loc }) {
           style={{
             fontFamily: t.titleFont,
             fontWeight: 800,
-            fontSize: 66,
+            fontSize: fs(66),
             lineHeight: 1.02,
             letterSpacing: "-0.5px",
             margin: 0,
@@ -155,7 +151,7 @@ function TextBlock({ theme, loc }) {
           {loc.name || "New location"}
         </h1>
         {loc.neighborhood ? (
-          <p style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 40, lineHeight: 1.05, margin: "10px 0 0" }}>
+          <p style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: fs(40), lineHeight: 1.05, margin: "10px 0 0" }}>
             {loc.neighborhood}
           </p>
         ) : null}
@@ -166,7 +162,7 @@ function TextBlock({ theme, loc }) {
           <Sparkle color={t.accent} size={64} />
         </div>
         {loc.caption ? (
-          <p style={{ fontFamily: t.bodyFont, fontSize: 36, lineHeight: 1.28, margin: 0 }}>{loc.caption}</p>
+          <p style={{ fontFamily: t.bodyFont, fontSize: fs(36), lineHeight: 1.28, margin: 0 }}>{loc.caption}</p>
         ) : null}
       </div>
     </div>
@@ -206,14 +202,15 @@ function PhotoCell({ src, theme, radius = 8, style }) {
 }
 
 // Shared cover title block. `align` and sizes let each template place it.
-function CoverTitle({ theme, loc, align = "center", titleSize = 110, eyebrowSize = 34, subSize = 40, sparkle = true }) {
+function CoverTitle({ theme, loc, align = "center", titleSize = 110, eyebrowSize = 34, subSize = 40, sparkle = true, ts = 1 }) {
   const t = theme;
+  const fs = (n) => Math.round(n * ts);
   return (
     <div style={{ textAlign: align }}>
       <p
         style={{
           fontFamily: t.bodyFont,
-          fontSize: eyebrowSize,
+          fontSize: fs(eyebrowSize),
           letterSpacing: "6px",
           textTransform: "uppercase",
           margin: 0,
@@ -231,7 +228,7 @@ function CoverTitle({ theme, loc, align = "center", titleSize = 110, eyebrowSize
         style={{
           fontFamily: t.titleFont,
           fontWeight: 800,
-          fontSize: titleSize,
+          fontSize: fs(titleSize),
           lineHeight: 1.0,
           letterSpacing: "-1px",
           margin: "6px 0 0",
@@ -243,7 +240,7 @@ function CoverTitle({ theme, loc, align = "center", titleSize = 110, eyebrowSize
         <p
           style={{
             fontFamily: t.bodyFont,
-            fontSize: subSize,
+            fontSize: fs(subSize),
             lineHeight: 1.3,
             margin: align === "left" ? "20px 0 0" : "20px auto 0",
             maxWidth: 780,
@@ -268,15 +265,16 @@ const POLAROID_SLOTS = [
   [70, 66, 9],
 ];
 
-function CoverSlide({ theme, loc }) {
+function CoverSlide({ theme, loc, ts = 1 }) {
   const t = theme;
+  const fs = (n) => Math.round(n * ts);
   const images = slideImages(loc);
   const template = loc.coverTemplate || "classic";
 
   // ---- Moodboard 3×3 (center cell = title) ----
   if (template === "moodboard") {
     let p = 0;
-    const mb = photoBleed(loc.photoScale, "none");
+    const mb = photoBleed(loc.photoScale);
     return (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gridTemplateRows: "1fr 1fr 1fr", gap: mb.gap + 4, width: "100%", height: "100%", ...mb.style }}>
         {Array.from({ length: 9 }).map((_, i) => {
@@ -295,14 +293,14 @@ function CoverSlide({ theme, loc }) {
                   borderRadius: 8,
                 }}
               >
-                <p style={{ fontFamily: t.bodyFont, fontSize: 20, letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.8 }}>
+                <p style={{ fontFamily: t.bodyFont, fontSize: fs(20), letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.8 }}>
                   {loc.eyebrow || "NYC by MA"}
                 </p>
-                <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 46, lineHeight: 1.02, letterSpacing: "-0.5px", margin: "8px 0 0" }}>
+                <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: fs(46), lineHeight: 1.02, letterSpacing: "-0.5px", margin: "8px 0 0" }}>
                   {loc.name || "Your title"}
                 </h1>
                 {loc.caption ? (
-                  <p style={{ fontFamily: t.bodyFont, fontSize: 20, lineHeight: 1.25, margin: "8px 0 0" }}>{loc.caption}</p>
+                  <p style={{ fontFamily: t.bodyFont, fontSize: fs(20), lineHeight: 1.25, margin: "8px 0 0" }}>{loc.caption}</p>
                 ) : null}
               </div>
             );
@@ -326,15 +324,16 @@ function CoverSlide({ theme, loc }) {
               position: "absolute",
               left: `${left}%`,
               top: `${top}%`,
-              width: `${27 * ps}%`,
-              transform: `rotate(${rot}deg)`,
+              width: "27%",
+              transform: `rotate(${rot}deg) scale(${ps})`,
+              transformOrigin: "center",
               background: "#fff",
               padding: "10px 10px 34px",
               borderRadius: 4,
               boxShadow: `0 18px 34px ${hexA("#000000", 0.28)}`,
             }}
           >
-            <PhotoCell src={images[i]} theme={t} radius={2} style={{ height: 220 * ps, background: hexA("#000000", 0.06) }} />
+            <PhotoCell src={images[i]} theme={t} radius={2} style={{ height: 220, background: hexA("#000000", 0.06) }} />
           </div>
         ))}
         {/* Title card on top */}
@@ -353,13 +352,13 @@ function CoverSlide({ theme, loc }) {
             color: "#241F21",
           }}
         >
-          <p style={{ fontFamily: t.bodyFont, fontSize: 22, letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.7 }}>
+          <p style={{ fontFamily: t.bodyFont, fontSize: fs(22), letterSpacing: "3px", textTransform: "uppercase", margin: 0, opacity: 0.7 }}>
             {loc.eyebrow || "NYC by MA"}
           </p>
-          <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 60, lineHeight: 1.0, margin: "8px 0 0" }}>
+          <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: fs(60), lineHeight: 1.0, margin: "8px 0 0" }}>
             {loc.name || "Your title"}
           </h1>
-          {loc.caption ? <p style={{ fontFamily: t.bodyFont, fontSize: 24, margin: "10px 0 0" }}>{loc.caption}</p> : null}
+          {loc.caption ? <p style={{ fontFamily: t.bodyFont, fontSize: fs(24), margin: "10px 0 0" }}>{loc.caption}</p> : null}
         </div>
       </div>
     );
@@ -368,14 +367,13 @@ function CoverSlide({ theme, loc }) {
   // ---- Big title + bottom film strip ----
   if (template === "filmstrip") {
     const strip = images.slice(0, 5);
-    const fb = photoBleed(loc.photoScale, "top");
-    const stripH = Math.max(28, Math.min(52, Math.round(34 + ((loc.photoScale || 1) - 1) * 60)));
+    const fb = photoBleed(loc.photoScale);
     return (
       <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-          <CoverTitle theme={t} loc={loc} align="left" titleSize={132} subSize={40} />
+          <CoverTitle theme={t} loc={loc} align="left" titleSize={132} subSize={40} ts={ts} />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(strip.length, 1)}, 1fr)`, gap: fb.gap + 2, height: `${stripH}%`, ...fb.style }}>
+        <div style={{ display: "grid", gridTemplateColumns: `repeat(${Math.max(strip.length, 1)}, 1fr)`, gap: fb.gap + 2, height: "34%", ...fb.style }}>
           {(strip.length ? strip : [undefined, undefined, undefined]).map((src, i) => (
             <PhotoCell key={i} src={src} theme={t} radius={10} />
           ))}
@@ -389,10 +387,10 @@ function CoverSlide({ theme, loc }) {
     return (
       <div style={{ display: "flex", height: "100%", gap: 28 }}>
         <div style={{ flex: "1 1 44%", display: "flex", flexDirection: "column", justifyContent: "center", minWidth: 0 }}>
-          <CoverTitle theme={t} loc={loc} align="left" titleSize={96} subSize={36} />
+          <CoverTitle theme={t} loc={loc} align="left" titleSize={96} subSize={36} ts={ts} />
         </div>
         <div style={{ flex: "1 1 56%", minWidth: 0, display: "flex" }}>
-          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} protect="left" />
+          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} />
         </div>
       </div>
     );
@@ -401,10 +399,10 @@ function CoverSlide({ theme, loc }) {
   // ---- Classic (centered title + optional collage) ----
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 40 }}>
-      <CoverTitle theme={t} loc={loc} align="center" titleSize={118} />
+      <CoverTitle theme={t} loc={loc} align="center" titleSize={118} ts={ts} />
       {images.length ? (
         <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} protect="top" />
+          <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} />
         </div>
       ) : (
         <div style={{ flex: 1 }} />
@@ -414,8 +412,9 @@ function CoverSlide({ theme, loc }) {
 }
 
 // ---- END SLIDE (follow us + QR) --------------------------------------------
-function EndSlide({ theme, loc }) {
+function EndSlide({ theme, loc, ts = 1 }) {
   const t = theme;
+  const fs = (n) => Math.round(n * ts);
   const url = instagramUrl(loc.handle);
   const handleText = loc.handle
     ? loc.handle.startsWith("@") || /^https?:/i.test(loc.handle)
@@ -426,11 +425,11 @@ function EndSlide({ theme, loc }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", alignItems: "center", justifyContent: "center", textAlign: "center", gap: 30 }}>
       <Sparkle color={t.accent} size={80} />
-      <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 96, lineHeight: 1.02, margin: 0 }}>
+      <h1 style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: fs(96), lineHeight: 1.02, margin: 0 }}>
         {loc.name || "Follow along"}
       </h1>
       {loc.caption ? (
-        <p style={{ fontFamily: t.bodyFont, fontSize: 40, lineHeight: 1.3, margin: 0, maxWidth: 760 }}>{loc.caption}</p>
+        <p style={{ fontFamily: t.bodyFont, fontSize: fs(40), lineHeight: 1.3, margin: 0, maxWidth: 760 }}>{loc.caption}</p>
       ) : null}
 
       {/* QR card */}
@@ -447,29 +446,23 @@ function EndSlide({ theme, loc }) {
         <QRCode value={url} size={360} fg="#1b1205" bg="#ffffff" />
       </div>
 
-      <p style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: 56, margin: "8px 0 0", color: t.accent }}>
+      <p style={{ fontFamily: t.titleFont, fontWeight: 800, fontSize: fs(56), margin: "8px 0 0", color: t.accent }}>
         {handleText}
       </p>
-      <p style={{ fontFamily: t.bodyFont, fontSize: 30, opacity: 0.8, margin: 0 }}>Scan to follow on Instagram</p>
+      <p style={{ fontFamily: t.bodyFont, fontSize: fs(30), opacity: 0.8, margin: 0 }}>Scan to follow on Instagram</p>
     </div>
   );
 }
 
 // ---- LOCATION SLIDE (default) ----------------------------------------------
-function LocationSlide({ theme, loc }) {
+function LocationSlide({ theme, loc, ts = 1 }) {
   const t = theme;
   const images = slideImages(loc);
   const textPosition = loc.textPosition === "bottom" ? "bottom" : "top";
-  const text = <TextBlock theme={t} loc={loc} />;
+  const text = <TextBlock theme={t} loc={loc} ts={ts} />;
   const photos = (
     <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-      <PhotoArea
-        theme={t}
-        images={images}
-        layout={loc.photoLayout || "auto"}
-        scale={loc.photoScale}
-        protect={textPosition === "top" ? "top" : "bottom"}
-      />
+      <PhotoArea theme={t} images={images} layout={loc.photoLayout || "auto"} scale={loc.photoScale} />
     </div>
   );
   return (
@@ -493,6 +486,8 @@ const SlideCard = forwardRef(function SlideCard({ theme, location, index, total 
   const t = theme;
   const loc = location || {};
   const type = loc.type || "location";
+  const ts = Number.isFinite(loc.textScale) ? loc.textScale : 1;
+  const textColor = loc.textColor || t.text;
 
   return (
     <div
@@ -501,7 +496,7 @@ const SlideCard = forwardRef(function SlideCard({ theme, location, index, total 
         width: SLIDE_W,
         height: SLIDE_H,
         background: textureBackground(t),
-        color: t.text,
+        color: textColor,
         position: "relative",
         overflow: "hidden",
         display: "flex",
@@ -512,11 +507,11 @@ const SlideCard = forwardRef(function SlideCard({ theme, location, index, total 
     >
       <div style={{ flex: 1, minHeight: 0 }}>
         {type === "cover" ? (
-          <CoverSlide theme={t} loc={loc} />
+          <CoverSlide theme={t} loc={loc} ts={ts} />
         ) : type === "end" ? (
-          <EndSlide theme={t} loc={loc} />
+          <EndSlide theme={t} loc={loc} ts={ts} />
         ) : (
-          <LocationSlide theme={t} loc={loc} />
+          <LocationSlide theme={t} loc={loc} ts={ts} />
         )}
       </div>
 
