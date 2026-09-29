@@ -14,6 +14,7 @@ const COLUMNS = [
     links: [
       { label: "How It Works", href: "/build" },
       { label: "Contact", href: "https://www.instagram.com/NYC_BY_MA/", external: true },
+      { label: "Creator Portal", href: "/portal" },
     ],
   },
   {
