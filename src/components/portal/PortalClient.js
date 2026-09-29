@@ -51,6 +51,7 @@ export default function PortalClient() {
 // PASSWORD GATE
 // -----------------------------------------------------------------------------
 function PasswordGate({ onSuccess }) {
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,11 +64,11 @@ function PasswordGate({ onSuccess }) {
       const res = await fetch("/api/portal-auth", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok && data.ok) onSuccess();
-      else setError("That password isn't right.");
+      else setError("That username or password isn't right.");
     } catch {
       setError("Something went wrong. Try again.");
     } finally {
@@ -87,11 +88,20 @@ function PasswordGate({ onSuccess }) {
         </p>
         <form onSubmit={submit} className="mt-6 space-y-3">
           <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="Username"
+            autoFocus
+            autoComplete="username"
+            className="w-full rounded-xl border border-ink/12 bg-white px-4 py-3 text-center text-sm text-ink focus:border-pink/50 focus:outline-none"
+          />
+          <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            autoFocus
+            autoComplete="current-password"
             className="w-full rounded-xl border border-ink/12 bg-white px-4 py-3 text-center text-sm text-ink focus:border-pink/50 focus:outline-none"
           />
           {error ? <p className="text-xs font-medium text-heart">{error}</p> : null}
