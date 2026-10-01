@@ -28,6 +28,7 @@ export default function LocationForm({ onAdd }) {
 
   // Address-lookup state
   const [lookupQuery, setLookupQuery] = useState("");
+  const [addressInput, setAddressInput] = useState(""); // editable address
   const [looking, setLooking] = useState(false);
   const [lookupMsg, setLookupMsg] = useState("");
   const [place, setPlace] = useState(null); // { address, website, lat, lng, source, websiteMatched }
@@ -56,9 +57,9 @@ export default function LocationForm({ onAdd }) {
     }
   };
 
-  const runLookup = async (e) => {
-    e?.preventDefault();
-    const q = lookupQuery.trim();
+  // Geocode a query (a business name OR a street address) → pin + fields.
+  const geocode = async (rawQuery, { fromAddress = false } = {}) => {
+    const q = (rawQuery || "").trim();
     if (!q) return;
     setLooking(true);
     setLookupMsg("");
@@ -70,12 +71,12 @@ export default function LocationForm({ onAdd }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!data.found) {
-        setPlace(null);
-        setLookupMsg(data.message || "No match found.");
+        setLookupMsg(data.message || "No match found. Try adding the city or a cross-street.");
         return;
       }
       setPlace(data);
       setCoords({ lat: data.lat, lng: data.lng });
+      setAddressInput(data.address || (fromAddress ? q : ""));
       // Prefill fields (only overwrite name/neighborhood if empty so manual edits stick).
       if (!name.trim() && data.name) setName(data.name);
       if (!neighborhood.trim() && data.neighborhood) setNeighborhood(data.neighborhood);
@@ -93,6 +94,12 @@ export default function LocationForm({ onAdd }) {
     }
   };
 
+  const runLookup = (e) => {
+    e?.preventDefault();
+    geocode(lookupQuery);
+  };
+  const locateAddress = () => geocode(addressInput, { fromAddress: true });
+
   const reset = () => {
     setName("");
     setNeighborhood("");
@@ -100,6 +107,7 @@ export default function LocationForm({ onAdd }) {
     setImages([]);
     setError("");
     setLookupQuery("");
+    setAddressInput("");
     setLookupMsg("");
     setPlace(null);
     setCoords({ lat: null, lng: null });
@@ -117,7 +125,7 @@ export default function LocationForm({ onAdd }) {
       neighborhood,
       caption,
       images,
-      address: place?.address || "",
+      address: addressInput || place?.address || "",
       website: place?.website || "",
       lat: coords.lat,
       lng: coords.lng,
@@ -132,7 +140,7 @@ export default function LocationForm({ onAdd }) {
     <form onSubmit={submit} className="space-y-3">
       {/* Address / business lookup */}
       <div className="rounded-xl border border-pink/20 bg-blush-soft/50 p-3">
-        <label className="mb-1 block text-xs font-semibold text-ink">Find by address or name</label>
+        <label className="mb-1 block text-xs font-semibold text-ink">Find by name or address</label>
         <div className="flex gap-2">
           <input
             value={lookupQuery}
@@ -140,7 +148,7 @@ export default function LocationForm({ onAdd }) {
             onKeyDown={(e) => {
               if (e.key === "Enter") runLookup(e);
             }}
-            placeholder="Levain Bakery, 351 Amsterdam Ave"
+            placeholder="Levain Bakery, or 351 Amsterdam Ave"
             className={field}
           />
           <button
@@ -152,19 +160,42 @@ export default function LocationForm({ onAdd }) {
             {looking ? "…" : "Find"}
           </button>
         </div>
+
+        {/* Editable address — type an exact address and locate it on the map */}
+        <label className="mb-1 mt-3 block text-xs font-semibold text-ink">Address</label>
+        <div className="flex gap-2">
+          <input
+            value={addressInput}
+            onChange={(e) => setAddressInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                locateAddress();
+              }
+            }}
+            placeholder="123 W 79th St, New York, NY"
+            className={field}
+          />
+          <button
+            type="button"
+            onClick={locateAddress}
+            disabled={looking || !addressInput.trim()}
+            className="shrink-0 rounded-xl border border-pink/40 bg-white px-3 py-2.5 text-sm font-semibold text-pink-deep transition hover:bg-pink hover:text-white disabled:opacity-50"
+          >
+            {looking ? "…" : "Locate"}
+          </button>
+        </div>
+
         {lookupMsg ? <p className="mt-2 text-xs font-medium text-pink-deep">{lookupMsg}</p> : null}
 
         {coords.lat != null ? (
           <>
-            <div className="mt-3 h-40 overflow-hidden rounded-xl ring-1 ring-ink/10">
+            <div className="mt-3 h-72 overflow-hidden rounded-xl ring-1 ring-ink/10 sm:h-80">
               <MapPicker lat={coords.lat} lng={coords.lng} onChange={setCoords} />
             </div>
             <p className="mt-1.5 text-[11px] text-ink-soft">
-              Drag the pin or tap the map to fine-tune the exact spot.
+              Drag the pin, tap the map, or scroll to zoom — fine-tune the exact spot.
             </p>
-            {place?.address ? (
-              <p className="mt-1 text-[11px] text-ink-soft">📍 {place.address}</p>
-            ) : null}
             {place?.website ? (
               <a
                 href={place.website}

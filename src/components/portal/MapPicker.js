@@ -27,8 +27,11 @@ const pinIcon = L.divIcon({
 function Recenter({ lat, lng }) {
   const map = useMap();
   useEffect(() => {
-    if (Number.isFinite(lat) && Number.isFinite(lng)) {
-      map.setView([lat, lng], Math.max(map.getZoom(), 15), { animate: true });
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+    // Only recenter when the point is off-screen (a fresh lookup) — don't fight
+    // the user's own pan/zoom while they're nudging the pin around.
+    if (!map.getBounds().contains([lat, lng])) {
+      map.setView([lat, lng], Math.max(map.getZoom(), 16), { animate: true });
     }
   }, [lat, lng, map]);
   return null;
@@ -48,7 +51,7 @@ export default function MapPicker({ lat, lng, onChange }) {
   const center = hasPin ? [lat, lng] : [40.7766, -73.9772];
 
   return (
-    <MapContainer center={center} zoom={hasPin ? 15 : 12} scrollWheelZoom={false} className="h-full w-full">
+    <MapContainer center={center} zoom={hasPin ? 16 : 12} scrollWheelZoom={true} doubleClickZoom={true} className="h-full w-full">
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
