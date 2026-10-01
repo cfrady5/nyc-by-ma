@@ -18,6 +18,7 @@ import { getFilter } from "@/data/filters";
 import { recInCollection } from "@/data/collections";
 import { matchesQuery } from "@/lib/utils";
 import { useSavedRecs } from "@/hooks/useSavedRecs";
+import { usePublishedRecs } from "@/hooks/usePublishedRecs";
 
 // Scroll helper shared by the nav + CTAs.
 function scrollToId(id) {
@@ -54,12 +55,19 @@ export default function HomeClient() {
   const [sort, setSort] = useState("featured");
 
   const { isSaved, toggleSaved, savedCount } = useSavedRecs();
+  const publishedRecs = usePublishedRecs();
+
+  // Built-in recs + any locations published from the portal (deduped by id).
+  const allRecs = useMemo(() => {
+    const seen = new Set(recommendations.map((r) => r.id));
+    return [...recommendations, ...publishedRecs.filter((r) => !seen.has(r.id))];
+  }, [publishedRecs]);
 
   // ---- The single filtering pipeline (search + filters + collection + saved).
   // Within a facet selections are OR'd; facets are AND'd together.
   const filtered = useMemo(() => {
     const defs = activeFilters.map((l) => getFilter(l)).filter(Boolean);
-    return recommendations.filter((rec) => {
+    return allRecs.filter((rec) => {
       if (!matchesQuery(rec, query)) return false;
       if (boroughs.length && !boroughs.some((b) => (rec.borough || "").includes(b))) return false;
       if (defs.length && !defs.some((d) => d.test(rec))) return false;
@@ -67,7 +75,7 @@ export default function HomeClient() {
       if (savedOnly && !isSaved(rec.id)) return false;
       return true;
     });
-  }, [query, boroughs, activeFilters, activeCollection, savedOnly, isSaved]);
+  }, [allRecs, query, boroughs, activeFilters, activeCollection, savedOnly, isSaved]);
 
   const sorted = useMemo(() => sortRecs(filtered, sort, isSaved), [filtered, sort, isSaved]);
 
@@ -155,7 +163,7 @@ export default function HomeClient() {
       />
 
       <Collections
-        recs={recommendations}
+        recs={allRecs}
         onPick={handlePickCollection}
         onViewAll={() => scrollToId("map")}
       />

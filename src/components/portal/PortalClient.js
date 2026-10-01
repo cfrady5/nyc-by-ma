@@ -11,6 +11,7 @@ import SlideEditor from "./SlideEditor";
 import { cx } from "@/lib/utils";
 
 const SESSION_KEY = "nyc_by_ma_portal_authed";
+const CREDS_KEY = "nyc_by_ma_portal_creds";
 
 export default function PortalClient() {
   const [authed, setAuthed] = useState(false);
@@ -25,9 +26,10 @@ export default function PortalClient() {
     setChecked(true);
   }, []);
 
-  const handleAuthed = () => {
+  const handleAuthed = (creds) => {
     try {
       window.sessionStorage.setItem(SESSION_KEY, "1");
+      if (creds) window.sessionStorage.setItem(CREDS_KEY, JSON.stringify(creds));
     } catch {
       /* ignore */
     }
@@ -37,6 +39,7 @@ export default function PortalClient() {
   const handleLock = () => {
     try {
       window.sessionStorage.removeItem(SESSION_KEY);
+      window.sessionStorage.removeItem(CREDS_KEY);
     } catch {
       /* ignore */
     }
@@ -68,7 +71,7 @@ function PasswordGate({ onSuccess }) {
         body: JSON.stringify({ username, password }),
       });
       const data = await res.json().catch(() => ({}));
-      if (res.ok && data.ok) onSuccess();
+      if (res.ok && data.ok) onSuccess({ username, password });
       else setError("That username or password isn't right.");
     } catch {
       setError("Something went wrong. Try again.");
@@ -127,9 +130,71 @@ function Studio({ onLock }) {
   const [playing, setPlaying] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  const [publishing, setPublishing] = useState(false);
+  const [publishMsg, setPublishMsg] = useState(null); // { ok, text }
+
   const { hydrated, theme, updateTheme, applyPreset, locations } = studio;
   const editing = locations.find((l) => l.id === editingId) || null;
   const editingIndex = editing ? locations.findIndex((l) => l.id === editingId) : -1;
+
+  // Location slides that can go on the map (need coordinates).
+  const mappable = locations.filter(
+    (l) => (l.type || "location") === "location" && Number.isFinite(l.lat) && Number.isFinite(l.lng)
+  );
+  const locationCount = locations.filter((l) => (l.type || "location") === "location").length;
+
+  const publishToSite = async () => {
+    setPublishing(true);
+    setPublishMsg(null);
+    let creds = null;
+    try {
+      creds = JSON.parse(window.sessionStorage.getItem(CREDS_KEY) || "null");
+    } catch {
+      creds = null;
+    }
+    if (!creds) {
+      setPublishing(false);
+      setPublishMsg({ ok: false, text: "Please Lock and sign in again to publish." });
+      return;
+    }
+    try {
+      const res = await fetch("/api/publish-locations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: creds.username,
+          password: creds.password,
+          locations: mappable.map((l) => ({
+            id: l.id,
+            name: l.name,
+            neighborhood: l.neighborhood,
+            borough: l.borough,
+            category: l.category,
+            website: l.website,
+            address: l.address,
+            caption: l.caption,
+            lat: l.lat,
+            lng: l.lng,
+          })),
+        }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.ok) {
+        setPublishMsg({
+          ok: true,
+          text: `Published ${data.published} location${data.published === 1 ? "" : "s"} to the site${
+            data.skipped ? ` · ${data.skipped} skipped (missing address)` : ""
+          }. The live map updates within a minute.`,
+        });
+      } else {
+        setPublishMsg({ ok: false, text: data.error || "Publish failed. Please try again." });
+      }
+    } catch {
+      setPublishMsg({ ok: false, text: "Couldn't reach the server. Please try again." });
+    } finally {
+      setPublishing(false);
+    }
+  };
 
   if (!hydrated) {
     return (
@@ -149,7 +214,16 @@ function Studio({ onLock }) {
             Slideshow <span className="italic text-pink">studio</span>
           </h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={publishToSite}
+            disabled={publishing || mappable.length === 0}
+            title={mappable.length === 0 ? "Add locations with an address first" : ""}
+            className="inline-flex items-center gap-1.5 rounded-full border border-gold/50 bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:border-gold hover:bg-butter-soft disabled:opacity-40"
+          >
+            {publishing ? "Publishing…" : `⬆ Add all to website${mappable.length ? ` (${mappable.length})` : ""}`}
+          </button>
           <button
             type="button"
             onClick={() => setPlaying(true)}
@@ -163,6 +237,27 @@ function Studio({ onLock }) {
           </button>
         </div>
       </div>
+
+      {publishMsg ? (
+        <div
+          className={cx(
+            "mb-4 flex items-start justify-between gap-3 rounded-2xl border px-4 py-3 text-sm",
+            publishMsg.ok ? "border-green-300 bg-green-50 text-green-800" : "border-heart/30 bg-blush-soft text-heart"
+          )}
+        >
+          <span>{publishMsg.text}</span>
+          <button type="button" onClick={() => setPublishMsg(null)} aria-label="Dismiss" className="shrink-0 opacity-60 hover:opacity-100">
+            ✕
+          </button>
+        </div>
+      ) : null}
+
+      {locationCount > 0 && mappable.length < locationCount ? (
+        <p className="mb-4 text-xs text-ink-soft">
+          Tip: {locationCount - mappable.length} location{locationCount - mappable.length === 1 ? "" : "s"} have no
+          address yet, so they won’t appear on the map. Use “Find by address” when adding a location to set its spot.
+        </p>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[360px_minmax(0,1fr)]">
         {/* Left: controls */}

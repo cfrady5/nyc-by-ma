@@ -15,6 +15,20 @@ import { cx } from "@/lib/utils";
 // the preview live.
 // -----------------------------------------------------------------------------
 
+const CATEGORY_CHOICES = [
+  "Food & Drink",
+  "Coffee",
+  "Dessert",
+  "Brunch",
+  "Healthy",
+  "Shopping",
+  "Free Activity",
+  "Culture",
+  "Theater & Music",
+  "Landmark / Experience",
+];
+const BOROUGH_CHOICES = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
+
 export default function SlideEditor({ location, theme, index, total, studio, onClose }) {
   const loc = location;
   const type = loc.type || "location";
@@ -141,6 +155,28 @@ export default function SlideEditor({ location, theme, index, total, studio, onC
                 <Text label="Name" value={loc.name} onChange={(v) => set({ name: v })} placeholder="Levain Bakery" field={field} labelCls={labelCls} />
                 <Text label="Neighborhood / area" value={loc.neighborhood} onChange={(v) => set({ neighborhood: v })} placeholder="Upper West Side" field={field} labelCls={labelCls} />
                 <Area label="Caption" value={loc.caption} onChange={(v) => set({ caption: v })} placeholder="What makes it special…" field={field} labelCls={labelCls} />
+                <div className="grid grid-cols-2 gap-2">
+                  <Select
+                    label="Category"
+                    value={loc.category || "Food & Drink"}
+                    onChange={(v) => set({ category: v })}
+                    options={CATEGORY_CHOICES}
+                    field={field}
+                    labelCls={labelCls}
+                  />
+                  <Select
+                    label="Borough"
+                    value={loc.borough || "Manhattan"}
+                    onChange={(v) => set({ borough: v })}
+                    options={BOROUGH_CHOICES}
+                    field={field}
+                    labelCls={labelCls}
+                  />
+                </div>
+                <p className="rounded-xl bg-blush-soft/60 px-3 py-2 text-[11px] text-ink-soft">
+                  Category + borough power the map pin and filters when you publish this to the site.
+                  Use “Find by address” on the Add tab to set exact coordinates.
+                </p>
               </>
             )}
 
@@ -405,6 +441,21 @@ function Text({ label, value, onChange, placeholder, field, labelCls }) {
     <div>
       <label className={labelCls}>{label}</label>
       <input value={value || ""} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} className={field} />
+    </div>
+  );
+}
+
+function Select({ label, value, onChange, options, field, labelCls }) {
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={field}>
+        {options.map((o) => (
+          <option key={o} value={o}>
+            {o}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
