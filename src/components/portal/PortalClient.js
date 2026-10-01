@@ -48,7 +48,137 @@ export default function PortalClient() {
 
   if (!checked) return null; // avoid a flash of the gate before we read the session
 
-  return authed ? <Studio onLock={handleLock} /> : <PasswordGate onSuccess={handleAuthed} />;
+  return authed ? <StudioRoot onLock={handleLock} /> : <PasswordGate onSuccess={handleAuthed} />;
+}
+
+// -----------------------------------------------------------------------------
+// STUDIO ROOT — owns the draft store and toggles between the Drafts list and
+// the editing Studio. "Save & exit" returns to the list (work auto-saves).
+// -----------------------------------------------------------------------------
+function StudioRoot({ onLock }) {
+  const studio = usePortalStudio();
+  const [view, setView] = useState("list"); // "list" | "studio"
+
+  if (!studio.hydrated) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <p className="text-sm text-ink-soft">Loading your drafts…</p>
+      </main>
+    );
+  }
+
+  if (view === "list") {
+    return (
+      <DraftsList
+        studio={studio}
+        onOpen={(id) => {
+          studio.switchDraft(id);
+          setView("studio");
+        }}
+        onNew={() => {
+          studio.newDraft();
+          setView("studio");
+        }}
+        onLock={onLock}
+      />
+    );
+  }
+
+  return <Studio studio={studio} onExit={() => setView("list")} onLock={onLock} />;
+}
+
+// -----------------------------------------------------------------------------
+// DRAFTS LIST
+// -----------------------------------------------------------------------------
+function DraftsList({ studio, onOpen, onNew, onLock }) {
+  const { drafts } = studio;
+  const fmt = (ts) => {
+    try {
+      return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    } catch {
+      return "";
+    }
+  };
+
+  return (
+    <main className="mx-auto max-w-4xl px-4 py-8">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="eyebrow">Creator portal</p>
+          <h1 className="mt-1 font-serif text-3xl font-extrabold tracking-tight text-ink">
+            Your <span className="italic text-pink">drafts</span>
+          </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onNew} className="btn-primary px-5 py-2.5 text-sm">
+            ＋ New slideshow
+          </button>
+          <button type="button" onClick={onLock} className="btn-secondary px-4 py-2.5 text-sm">
+            Lock
+          </button>
+        </div>
+      </div>
+
+      {drafts.length === 0 ? (
+        <div className="surface p-10 text-center text-sm text-ink-soft">No drafts yet.</div>
+      ) : (
+        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          {drafts
+            .slice()
+            .sort((a, b) => b.updatedAt - a.updatedAt)
+            .map((d) => (
+              <li key={d.id} className="surface flex flex-col gap-3 p-4">
+                <button type="button" onClick={() => onOpen(d.id)} className="min-w-0 text-left">
+                  <p className="truncate font-serif text-lg font-bold text-ink">{d.name}</p>
+                  <p className="mt-0.5 text-xs text-ink-soft">
+                    {d.slideCount} {d.slideCount === 1 ? "slide" : "slides"} · edited {fmt(d.updatedAt)}
+                  </p>
+                </button>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => onOpen(d.id)}
+                    className="rounded-full bg-pink px-3.5 py-1.5 text-xs font-semibold text-white hover:bg-pink-deep"
+                  >
+                    Open
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const name = window.prompt("Rename slideshow", d.name);
+                      if (name != null) studio.renameDraft(d.id, name.trim());
+                    }}
+                    className="rounded-full border border-ink/12 bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-blush-soft"
+                  >
+                    Rename
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => studio.duplicateDraft(d.id)}
+                    className="rounded-full border border-ink/12 bg-white px-3 py-1.5 text-xs font-semibold text-ink hover:bg-blush-soft"
+                  >
+                    Duplicate
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`Delete "${d.name}"? This can't be undone.`)) studio.deleteDraft(d.id);
+                    }}
+                    className="rounded-full border border-heart/30 bg-white px-3 py-1.5 text-xs font-semibold text-heart hover:bg-heart hover:text-white"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+        </ul>
+      )}
+
+      <p className="mt-6 text-xs text-ink-soft/80">
+        Drafts are saved automatically on this device. Open one to keep editing, or start a new slideshow.
+      </p>
+    </main>
+  );
 }
 
 // -----------------------------------------------------------------------------
@@ -124,8 +254,7 @@ function PasswordGate({ onSuccess }) {
 // -----------------------------------------------------------------------------
 // STUDIO
 // -----------------------------------------------------------------------------
-function Studio({ onLock }) {
-  const studio = usePortalStudio();
+function Studio({ studio, onExit, onLock }) {
   const [tab, setTab] = useState("add"); // "add" | "theme"
   const [playing, setPlaying] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -133,7 +262,7 @@ function Studio({ onLock }) {
   const [publishing, setPublishing] = useState(false);
   const [publishMsg, setPublishMsg] = useState(null); // { ok, text }
 
-  const { hydrated, theme, updateTheme, applyPreset, locations } = studio;
+  const { theme, updateTheme, applyPreset, locations } = studio;
   const editing = locations.find((l) => l.id === editingId) || null;
   const editingIndex = editing ? locations.findIndex((l) => l.id === editingId) : -1;
 
@@ -196,23 +325,34 @@ function Studio({ onLock }) {
     }
   };
 
-  if (!hydrated) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-ink-soft">Loading your studio…</p>
-      </main>
-    );
-  }
-
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="eyebrow">Creator portal</p>
-          <h1 className="mt-1 font-serif text-3xl font-extrabold tracking-tight text-ink">
-            Slideshow <span className="italic text-pink">studio</span>
-          </h1>
+        <div className="min-w-0">
+          <button
+            type="button"
+            onClick={onExit}
+            className="eyebrow inline-flex items-center gap-1 transition hover:text-pink-deep"
+          >
+            ← All drafts
+          </button>
+          <div className="mt-1 flex items-center gap-2">
+            <h1 className="truncate font-serif text-2xl font-extrabold tracking-tight text-ink sm:text-3xl">
+              {studio.activeName || "Untitled slideshow"}
+            </h1>
+            <button
+              type="button"
+              onClick={() => {
+                const name = window.prompt("Rename slideshow", studio.activeName);
+                if (name != null && name.trim()) studio.renameDraft(studio.activeId, name.trim());
+              }}
+              aria-label="Rename slideshow"
+              className="shrink-0 rounded-full border border-ink/12 bg-white px-2.5 py-1 text-xs font-semibold text-ink-soft transition hover:border-pink/40 hover:text-pink-deep"
+            >
+              ✎ Rename
+            </button>
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -232,8 +372,8 @@ function Studio({ onLock }) {
           >
             ▶ Play slideshow
           </button>
-          <button type="button" onClick={onLock} className="btn-secondary px-4 py-2.5 text-sm">
-            Lock
+          <button type="button" onClick={onExit} className="btn-secondary px-4 py-2.5 text-sm">
+            Save &amp; exit
           </button>
         </div>
       </div>
